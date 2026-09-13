@@ -68,7 +68,7 @@ const [categories, setCategories] = useState([]);
 
       const token = sessionStorage.getItem("token");
 
-      const response = await fetch(`${API_URL}/api/salons`, {
+      const response = await fetch(`${API_URL}/salons`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -97,7 +97,7 @@ const [categories, setCategories] = useState([]);
 
       const token = sessionStorage.getItem("token");
 
-      const response = await fetch(`${API_URL}/api/categories`, {
+      const response = await fetch(`${API_URL}/categories`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

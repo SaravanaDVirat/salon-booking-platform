@@ -79,7 +79,7 @@ const ServiceManagement = () => {
       const token = getToken();
 
       const response = await fetch(
-        `${API_ORIGIN}/api/salons/owner/my-salons`,
+        `${API_ORIGIN}/salons/owner/my-salons`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -122,7 +122,7 @@ const ServiceManagement = () => {
 
       const token = getToken();
 
-      const response = await fetch(`${API_ORIGIN}/api/categories`, {
+      const response = await fetch(`${API_ORIGIN}/categories`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

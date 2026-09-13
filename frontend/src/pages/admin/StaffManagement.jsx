@@ -151,7 +151,7 @@ const StaffManagement = () => {
       const token = sessionStorage.getItem("token");
 
       const response = await fetch(
-        `${API_URL}/api/salons`,
+        `${API_URL}/salons`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -188,7 +188,7 @@ const StaffManagement = () => {
     try {
       setServiceLoading(true);
       const token = sessionStorage.getItem("token");
-      const response = await fetch(`${API_URL}/api/services/salon/${salonId}`, {
+      const response = await fetch(`${API_URL}/services/salon/${salonId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await response.json();

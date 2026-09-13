@@ -60,7 +60,7 @@ const getImageUrl = (image) => {
     return image;
   }
 
-  return `${API_ORIGIN}${image.startsWith("/") ? image : `/${image}`}`;
+  return `${API_ORIGIN.replace("/api", "")}${image.startsWith("/") ? image : `/${image}`}`;
 };
 
 const formatDay = (day) => {
