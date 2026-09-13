@@ -489,16 +489,20 @@ const CustomerStaffSelection = () => {
                     <div className="relative flex min-w-0 items-start gap-3 sm:gap-4">
 
                       {item.profileImage ? (
-                        <img
-                          src={
-                            item.profileImage.startsWith("http")
-                              ? item.profileImage
-                              : `${API_URL}${item.profileImage}`
-                          }
-                          alt={item.name}
-                          className="h-14 w-14 shrink-0 rounded-2xl object-cover shadow-sm ring-4 ring-slate-50 transition-transform duration-300 group-hover:scale-[1.03] sm:h-16 sm:w-16"
-                        />
-                      ) : (
+  <img
+    src={
+      item.profileImage.startsWith("http")
+        ? item.profileImage
+        : `${API_URL.replace(/\/api$/, "")}${
+            item.profileImage.startsWith("/")
+              ? item.profileImage
+              : `/${item.profileImage}`
+          }`
+    }
+    alt={item.name}
+    className="h-14 w-14 shrink-0 rounded-2xl object-cover shadow-sm ring-4 ring-slate-50 transition-..."
+  />
+) : (
                         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 via-purple-500 to-fuchsia-500 text-base font-black text-white shadow-lg shadow-violet-200 transition-transform duration-300 group-hover:scale-[1.03] sm:h-16 sm:w-16 sm:text-lg">
                           {getInitials(item.name)}
                         </div>
