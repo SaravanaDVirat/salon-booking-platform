@@ -13,7 +13,7 @@ import {
 
 import { getCustomerStaffByService } from "../../services/customerSalonService";
 
-const API_URL = "http://localhost:1812";
+const API_URL = import.meta.env.VITE_API_URL;
 
 const CustomerStaffSelection = () => {
   const { salonId, serviceId } = useParams();

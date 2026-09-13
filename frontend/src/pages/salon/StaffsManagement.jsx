@@ -36,7 +36,7 @@ import {
 
 import "bootstrap/dist/css/bootstrap.min.css";
 
-const API_URL = "http://localhost:1812/api";
+const API_URL = import.meta.env.VITE_API_URL;
 
 const DAYS = [
   "MONDAY",

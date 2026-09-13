@@ -21,7 +21,7 @@ import {
   updateSalonStatus,
 } from "../../services/salonOwnerService";
 
-const API_ORIGIN = "http://localhost:1812";
+const API_ORIGIN = import.meta.env.VITE_API_URL;
 
 const initialWorkingHours = {
   monday: "09:00 - 18:00",

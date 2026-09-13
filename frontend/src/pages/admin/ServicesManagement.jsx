@@ -25,7 +25,7 @@ import {
   activateService,
 } from "../../services/serviceService";
 
-const API_URL = "http://localhost:1812";
+const API_URL = import.meta.env.VITE_API_URL;
 
 const initialForm = {
   salon: "",
