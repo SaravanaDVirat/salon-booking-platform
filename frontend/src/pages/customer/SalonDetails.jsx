@@ -32,7 +32,7 @@ const getImageUrl = (imagePath) => {
 
   const apiUrl = import.meta.env.VITE_API_URL;
 
-  const serverUrl = apiUrl.replace(/\/api\/?$/, "");
+  const serverUrl = apiUrl.replace("api", "");
 
   return `${serverUrl}${
     imagePath.startsWith("/") ? imagePath : `/${imagePath}`

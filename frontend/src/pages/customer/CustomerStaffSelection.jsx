@@ -493,7 +493,7 @@ const CustomerStaffSelection = () => {
     src={
       item.profileImage.startsWith("http")
         ? item.profileImage
-        : `${API_URL.replace(/\/api$/, "")}${
+        : `${API_URL.replace("api", "")}${
             item.profileImage.startsWith("/")
               ? item.profileImage
               : `/${item.profileImage}`
