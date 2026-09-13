@@ -29,6 +29,7 @@ import {
 } from "react-icons/fa";
 
 const API_URL = import.meta.env.VITE_API_URL;
+const BACKEND_URL = API_URL.replace(/\/api\/?$/, "");
 
 const days = [
   "MONDAY",
@@ -373,7 +374,7 @@ const StaffManagement = () => {
 
       profileImagePreview:
         item.profileImage
-          ? `${API_URL}${item.profileImage}`
+          ? `${BACKEND_URL}${item.profileImage}`
           : "",
 
       workingHours:
@@ -1030,7 +1031,7 @@ const StaffManagement = () => {
                             {item.profileImage ? (
 
                               <img
-                                src={`${API_URL}${item.profileImage}`}
+                                src={`${BACKEND_URL}${item.profileImage}`}
                                 alt={
                                   item.name
                                 }
@@ -1255,7 +1256,7 @@ const StaffManagement = () => {
               {item.profileImage ? (
 
                 <img
-                  src={`${API_URL}${item.profileImage}`}
+                  src={`${BACKEND_URL}${item.profileImage}`}
                   alt={item.name}
                   className="h-12 w-12 rounded-2xl object-cover shadow-sm ring-1 ring-slate-200 sm:h-14 sm:w-14 sm:rounded-[18px]"
                 />
@@ -2114,7 +2115,7 @@ const StaffManagement = () => {
                     {selectedStaff.profileImage ? (
 
                       <img
-                        src={`${API_URL}${selectedStaff.profileImage}`}
+                        src={`${BACKEND_URL}${selectedStaff.profileImage}`}
                         alt={
                           selectedStaff.name
                         }
