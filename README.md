@@ -76,7 +76,7 @@ A full-stack Salon & Beauty Booking Platform developed using the MERN stack. The
 
 ## Project Structure
 
-```text
+
 salon-booking-platform/
 │
 ├── backend/
@@ -85,7 +85,7 @@ salon-booking-platform/
 ├── .gitignore
 └── README.md
 
-## Requirements
+### Requirements
 Node.js
 npm
 MongoDB
@@ -94,18 +94,18 @@ Expo
 Expo Go or an Android emulator
 Installation
 
-## Clone the repository:
+### Clone the repository:
 
 git clone https://github.com/SaravanaDVirat/salon-booking-platform.git
 cd salon-booking-platform
 Backend Setup
 
-## Navigate to the backend folder:
+### Navigate to the backend folder:
 
 cd backend
 npm install
 
-## Create a .env file inside the backend folder and add the required environment variables.
+### Create a .env file inside the backend folder and add the required environment variables.
 
 Example:
 
@@ -113,7 +113,7 @@ PORT=1812
 MONGO_URI=your_mongodb_connection_string
 JWT_SECRET=your_jwt_secret
 
-## Start the backend:
+### Start the backend:
 
 npm start
 
@@ -125,9 +125,9 @@ The backend runs on:
 
 http://localhost:1812
 
-## Frontend Setup
+### Frontend Setup
 
-## Open another terminal and navigate to the frontend folder:
+### Open another terminal and navigate to the frontend folder:
 
 cd frontend
 npm install
@@ -137,16 +137,16 @@ The frontend runs on:
 
 http://localhost:3000
 
-## Make sure the frontend API configuration points to the running backend server.
+### Make sure the frontend API configuration points to the running backend server.
 
-## Customer Mobile Setup
+#### Customer Mobile Setup
 
 ## Navigate to the mobile application:
 
 cd customer-mobile
 npm install
 
-## Configure the backend API URL in the environment configuration.
+### Configure the backend API URL in the environment configuration.
 
 Example:
 
@@ -158,7 +158,7 @@ npx expo start
 
 The application can be tested using Expo Go or an Android emulator.
 
-## Database
+### Database
 
 The project uses MongoDB as the database.
 
@@ -168,7 +168,7 @@ For production deployment, MongoDB Atlas can be used as the remote database.
 
 The database itself is not included in this repository.
 
-## Authentication
+### Authentication
 
 The application uses JWT-based authentication with role-based access control.
 
@@ -180,13 +180,13 @@ ADMIN
 
 Each role has access to the features and resources required for that type of user.
 
-## Environment Variables
+### Environment Variables
 
 Environment files containing secrets and private configuration are not committed to the repository.
 
 Create the required .env files locally before running the applications.
 
-## Running the Project
+### Running the Project
 
 Start the backend first:
 
@@ -208,6 +208,6 @@ npx expo start
 
 Make sure the backend is running before using the web or mobile applications.
 
-## Author
+### Author
 
 Udhaya Prakash
