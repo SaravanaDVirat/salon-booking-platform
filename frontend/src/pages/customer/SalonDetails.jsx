@@ -19,6 +19,9 @@ import { getCustomerSalonById } from "../../services/customerSalonService";
 // =====================================================
 // IMAGE URL
 // =====================================================
+// =====================================================
+// IMAGE URL
+// =====================================================
 const getImageUrl = (imagePath) => {
   if (!imagePath) return null;
 
@@ -29,6 +32,15 @@ const getImageUrl = (imagePath) => {
   ) {
     return imagePath;
   }
+
+  const apiUrl = import.meta.env.VITE_API_URL;
+
+  const serverUrl = apiUrl.replace(/\/api\/?$/, "");
+
+  return `${serverUrl}${
+    imagePath.startsWith("/") ? imagePath : `/${imagePath}`
+  }`;
+};
 
   const apiUrl = import.meta.env.VITE_API_URL;
 
