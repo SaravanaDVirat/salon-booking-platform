@@ -131,7 +131,7 @@ http://localhost:1812
 
 cd frontend
 npm install
-npm start
+npm run dev
 
 The frontend runs on:
 
