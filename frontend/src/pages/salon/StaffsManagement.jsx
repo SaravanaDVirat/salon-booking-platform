@@ -38,6 +38,25 @@ import "bootstrap/dist/css/bootstrap.min.css";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+const BACKEND_URL = API_URL.replace(/\/api\/?$/, "");
+
+const getImageURL = (imagePath) => {
+  if (!imagePath) return "";
+
+  if (
+    imagePath.startsWith("http://") ||
+    imagePath.startsWith("https://") ||
+    imagePath.startsWith("data:")
+  ) {
+    return imagePath;
+  }
+  if (imagePath.startsWith("/")) {
+    return `${BACKEND_URL}${imagePath}`;
+  }
+
+  return `${BACKEND_URL}/${imagePath}`;
+};
+
 
 const DAYS = [
   "MONDAY",
@@ -2340,7 +2359,7 @@ const StaffsManagement = () => {
               <div className="flex items-center gap-3">
                 {item.profileImage ? (
                   <img
-                    src={`${API_URL.replace("/api", "")}${item.profileImage}`}
+                    src={getImageURL(item.profileImage)}
                     alt={item.name}
                     className="h-12 w-12 rounded-2xl object-cover shadow-sm ring-2 ring-white"
                   />
@@ -2745,7 +2764,7 @@ const StaffsManagement = () => {
     <div className="shrink-0">
       {item.profileImage ? (
         <img
-          src={`${API_URL.replace("/api", "")}${item.profileImage}`}
+          src={getImageURL(item.profileImage)}
           alt={item.name}
           className="h-12 w-12 rounded-[16px] object-cover shadow-sm ring-2 ring-white sm:h-14 sm:w-14 sm:rounded-[18px]"
         />

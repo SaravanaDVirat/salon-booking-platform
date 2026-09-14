@@ -192,7 +192,7 @@ const getId = (value) => {
 
 const getImageUrl = (path) => {
   if (!path) return "";
-  if (String(path).startsWith("http")) return path;
+  if (String(path).startsWith("http://") || String(path).startsWith("https://")) return path;
   return `${API_URL.replace("/api", "")}${path}`;
 };
 
