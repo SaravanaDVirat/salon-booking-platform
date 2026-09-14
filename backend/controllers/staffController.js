@@ -3,6 +3,11 @@ const Salon = require("../models/Salon");
 const User = require("../models/User");
 const Service = require("../models/Service");
 
+const cloudinary = require("cloudinary").v2;
+
+/* =========================================================
+   HELPER FUNCTIONS
+========================================================= */
 
 const hasSalonAccess = (user, salonId) => {
   if (!user || !salonId || !Array.isArray(user.salons)) {
@@ -14,16 +19,125 @@ const hasSalonAccess = (user, salonId) => {
   );
 };
 
+/* =========================================================
+   CLOUDINARY HELPERS
+========================================================= */
+
+const getCloudinaryPublicId = (imageUrl) => {
+  if (!imageUrl || typeof imageUrl !== "string") {
+    return null;
+  }
+
+  try {
+    if (!imageUrl.includes("res.cloudinary.com")) {
+      return null;
+    }
+
+    const uploadIndex = imageUrl.indexOf("/upload/");
+
+    if (uploadIndex === -1) {
+      return null;
+    }
+
+    let publicId = imageUrl.substring(
+      uploadIndex + "/upload/".length
+    );
+
+  
+    publicId = publicId.replace(/^v\d+\//, "");
+
+    publicId = publicId.replace(/\.[^/.]+$/, "");
+
+    return publicId || null;
+  } catch (error) {
+    console.error(
+      "Failed to extract Cloudinary public ID:",
+      error.message
+    );
+
+    return null;
+  }
+};
+
+const deleteCloudinaryImage = async (imageUrl) => {
+  const publicId = getCloudinaryPublicId(imageUrl);
+
+
+  if (!publicId) {
+    return;
+  }
+
+  try {
+    await cloudinary.uploader.destroy(publicId, {
+      resource_type: "image"
+    });
+
+    console.log(
+      `Cloudinary staff image deleted: ${publicId}`
+    );
+  } catch (error) {
+    console.error(
+      "Failed to delete Cloudinary staff image:",
+      error.message
+    );
+  }
+};
+
+const cleanupUploadedFile = async (file) => {
+  if (!file) {
+    return;
+  }
+
+  try {
+  
+    if (file.public_id) {
+      await cloudinary.uploader.destroy(file.public_id, {
+        resource_type: "image"
+      });
+
+      console.log(
+        `Cloudinary uploaded staff image cleaned up: ${file.public_id}`
+      );
+
+      return;
+    }
+
+
+    if (file.path) {
+      const publicId = getCloudinaryPublicId(file.path);
+
+      if (publicId) {
+        await cloudinary.uploader.destroy(publicId, {
+          resource_type: "image"
+        });
+
+        console.log(
+          `Cloudinary uploaded staff image cleaned up: ${publicId}`
+        );
+      }
+    }
+  } catch (error) {
+    console.error(
+      "Failed to cleanup uploaded Cloudinary staff image:",
+      error.message
+    );
+  }
+};
+
+/* =========================================================
+   CREATE STAFF
+========================================================= */
+
 const createStaff = async (req, res) => {
   try {
     const {
-  salon,
-  name,
-  specialization,
-  phone,
-  workingHours,
-  services
-} = req.body;
+      salon,
+      name,
+      specialization,
+      phone,
+      workingHours,
+      services
+    } = req.body;
 
     if (!name) {
       return res.status(400).json({
@@ -32,6 +146,11 @@ const createStaff = async (req, res) => {
     }
 
     let salonId;
+
+    /* =====================================================
+       ADMIN
+    ===================================================== */
+
     if (req.user.role === "ADMIN") {
       if (!salon) {
         return res.status(400).json({
@@ -41,14 +160,24 @@ const createStaff = async (req, res) => {
 
       salonId = salon;
     }
+
+    /* =====================================================
+       SALON OWNER
+    ===================================================== */
+
     else {
       const user = await User.findById(req.user.userId);
 
-      if (!user || !Array.isArray(user.salons) || user.salons.length === 0) {
+      if (
+        !user ||
+        !Array.isArray(user.salons) ||
+        user.salons.length === 0
+      ) {
         return res.status(403).json({
           message: "You are not associated with any salon"
         });
       }
+
       if (!salon) {
         return res.status(400).json({
           message: "Salon is required"
@@ -64,14 +193,21 @@ const createStaff = async (req, res) => {
       salonId = salon;
     }
 
-    const salonExists =
-      await Salon.findById(salonId);
+    /* =====================================================
+       CHECK SALON
+    ===================================================== */
+
+    const salonExists = await Salon.findById(salonId);
 
     if (!salonExists) {
       return res.status(404).json({
         message: "Salon not found"
       });
     }
+
+    /* =====================================================
+       OWNER AUTHORIZATION
+    ===================================================== */
 
     if (
       req.user.role !== "ADMIN" &&
@@ -82,11 +218,14 @@ const createStaff = async (req, res) => {
       });
     }
 
-
+  
     const profileImage = req.file
-      ? `/uploads/staff/${req.file.filename}`
+      ? req.file.path
       : "";
 
+    /* =====================================================
+       WORKING HOURS
+    ===================================================== */
 
     let parsedWorkingHours;
 
@@ -96,65 +235,90 @@ const createStaff = async (req, res) => {
           ? JSON.parse(workingHours)
           : workingHours;
     } catch (error) {
+      await cleanupUploadedFile(req.file);
+
       return res.status(400).json({
         message: "Invalid working hours format"
       });
     }
 
+    /* =====================================================
+       SERVICES
+    ===================================================== */
+
     let parsedServices = [];
 
-try {
-  parsedServices =
-    typeof services === "string"
-      ? JSON.parse(services)
-      : services || [];
-} catch (error) {
-  return res.status(400).json({
-    message: "Invalid services format"
-  });
-}
+    try {
+      parsedServices =
+        typeof services === "string"
+          ? JSON.parse(services)
+          : services || [];
+    } catch (error) {
+      await cleanupUploadedFile(req.file);
 
-if (!Array.isArray(parsedServices)) {
-  return res.status(400).json({
-    message: "Services must be an array"
-  });
-}
+      return res.status(400).json({
+        message: "Invalid services format"
+      });
+    }
 
-if (parsedServices.length > 0) {
-  const validServices = await Service.find({
-    _id: { $in: parsedServices },
-    salon: salonId,
-    isActive: true
-  }).select("_id");
+    if (!Array.isArray(parsedServices)) {
+      await cleanupUploadedFile(req.file);
 
-  if (validServices.length !== parsedServices.length) {
-    return res.status(400).json({
-      message: "One or more selected services are invalid"
+      return res.status(400).json({
+        message: "Services must be an array"
+      });
+    }
+
+
+    if (parsedServices.length > 0) {
+      const validServices = await Service.find({
+        _id: { $in: parsedServices },
+        salon: salonId,
+        isActive: true
+      }).select("_id");
+
+      if (validServices.length !== parsedServices.length) {
+        await cleanupUploadedFile(req.file);
+
+        return res.status(400).json({
+          message: "One or more selected services are invalid"
+        });
+      }
+    }
+
+    /* =====================================================
+       CREATE STAFF
+    ===================================================== */
+
+    const staff = await Staff.create({
+      salon: salonId,
+      name,
+      specialization,
+      services: parsedServices,
+      phone,
+      profileImage,
+      workingHours: parsedWorkingHours
     });
-  }
-}
 
-   const staff = await Staff.create({
-  salon: salonId,
-  name,
-  specialization,
-  services: parsedServices,
-  phone,
-  profileImage,
-  workingHours: parsedWorkingHours
-});
-
+    /* =====================================================
+       RESPONSE
+    ===================================================== */
 
     res.status(201).json({
       message: "Staff created successfully",
       staff
     });
-
   } catch (error) {
     console.error(
       "Create staff error:",
       error
     );
+
+    /*
+      If DB creation or any later operation fails,
+      remove the newly uploaded Cloudinary image.
+    */
+    await cleanupUploadedFile(req.file);
 
     res.status(500).json({
       message: "Failed to create staff",
@@ -163,13 +327,26 @@ if (parsedServices.length > 0) {
   }
 };
 
+/* =========================================================
+   GET ALL STAFF
+========================================================= */
+
 const getAllStaff = async (req, res) => {
   try {
     let filter = {};
 
+    /* =====================================================
+       ADMIN
+    ===================================================== */
+
     if (req.user.role === "ADMIN") {
       filter = {};
     }
+
+    /* =====================================================
+       SALON OWNER
+    ===================================================== */
+
     else {
       const user =
         await User.findById(
@@ -192,28 +369,29 @@ const getAllStaff = async (req, res) => {
       };
     }
 
+    /* =====================================================
+       FETCH STAFF
+    ===================================================== */
 
     const staff =
-  await Staff.find(filter)
-    .populate(
-      "salon",
-      "name city"
-    )
-    .populate(
-      "user",
-      "name email role"
-    )
-    .populate(
-      "services",
-      "name price duration category isActive"
-    );
-
+      await Staff.find(filter)
+        .populate(
+          "salon",
+          "name city"
+        )
+        .populate(
+          "user",
+          "name email role"
+        )
+        .populate(
+          "services",
+          "name price duration category isActive"
+        );
 
     res.status(200).json({
       count: staff.length,
       staff
     });
-
   } catch (error) {
     console.error(
       "Get all staff error:",
@@ -226,26 +404,29 @@ const getAllStaff = async (req, res) => {
     });
   }
 };
+
+/* =========================================================
+   GET STAFF BY ID
+========================================================= */
+
 const getStaffById = async (req, res) => {
   try {
-
     const staff =
-  await Staff.findById(
-    req.params.id
-  )
-    .populate(
-      "salon",
-      "name city"
-    )
-    .populate(
-      "user",
-      "name email role"
-    )
-    .populate(
-      "services",
-      "name price duration category isActive"
-    );
-
+      await Staff.findById(
+        req.params.id
+      )
+        .populate(
+          "salon",
+          "name city"
+        )
+        .populate(
+          "user",
+          "name email role"
+        )
+        .populate(
+          "services",
+          "name price duration category isActive"
+        );
 
     if (!staff) {
       return res.status(404).json({
@@ -253,15 +434,22 @@ const getStaffById = async (req, res) => {
       });
     }
 
+    /* =====================================================
+       ADMIN
+    ===================================================== */
 
     if (req.user.role === "ADMIN") {
       return res.status(200).json(staff);
     }
+
+    /* =====================================================
+       SALON OWNER
+    ===================================================== */
+
     const user =
       await User.findById(
         req.user.userId
       );
-
 
     if (
       !user ||
@@ -273,7 +461,6 @@ const getStaffById = async (req, res) => {
           "You are not associated with any salon"
       });
     }
-
 
     if (
       !staff.salon ||
@@ -288,11 +475,8 @@ const getStaffById = async (req, res) => {
       });
     }
 
-
     res.status(200).json(staff);
-
   } catch (error) {
-
     console.error(
       "Get staff by id error:",
       error
@@ -305,14 +489,16 @@ const getStaffById = async (req, res) => {
   }
 };
 
+/* =========================================================
+   UPDATE STAFF
+========================================================= */
+
 const updateStaff = async (req, res) => {
   try {
-
     const staff =
       await Staff.findById(
         req.params.id
       );
-
 
     if (!staff) {
       return res.status(404).json({
@@ -320,13 +506,15 @@ const updateStaff = async (req, res) => {
       });
     }
 
-    if (req.user.role !== "ADMIN") {
+    /* =====================================================
+       OWNER AUTHORIZATION
+    ===================================================== */
 
+    if (req.user.role !== "ADMIN") {
       const user =
         await User.findById(
           req.user.userId
         );
-
 
       if (
         !user ||
@@ -338,7 +526,6 @@ const updateStaff = async (req, res) => {
             "You are not associated with any salon"
         });
       }
-
 
       if (
         !hasSalonAccess(
@@ -353,144 +540,157 @@ const updateStaff = async (req, res) => {
       }
     }
 
+    /* =====================================================
+       REQUEST DATA
+    ===================================================== */
 
     const {
-  name,
-  specialization,
-  phone,
-  workingHours,
-  services
-} = req.body;
+      name,
+      specialization,
+      phone,
+      workingHours,
+      services
+    } = req.body;
 
+    /* =====================================================
+       BASIC FIELDS
+    ===================================================== */
 
     staff.name =
       name ?? staff.name;
-
 
     staff.specialization =
       specialization ??
       staff.specialization;
 
-      if (services !== undefined) {
-  let parsedServices;
-
-  try {
-    parsedServices =
-      typeof services === "string"
-        ? JSON.parse(services)
-        : services;
-  } catch (error) {
-    return res.status(400).json({
-      message: "Invalid services format"
-    });
-  }
-
-  if (!Array.isArray(parsedServices)) {
-    return res.status(400).json({
-      message: "Services must be an array"
-    });
-  }
-
-  if (parsedServices.length > 0) {
-    const validServices = await Service.find({
-      _id: { $in: parsedServices },
-      salon: staff.salon,
-      isActive: true
-    }).select("_id");
-
-    if (validServices.length !== parsedServices.length) {
-      return res.status(400).json({
-        message: "One or more selected services are invalid"
-      });
-    }
-  }
-
-  staff.services = parsedServices;
-}
-
-
     staff.phone =
       phone ?? staff.phone;
 
+    /* =====================================================
+       SERVICES
+    ===================================================== */
 
-    if (workingHours !== undefined) {
+    if (services !== undefined) {
+      let parsedServices;
 
       try {
+        parsedServices =
+          typeof services === "string"
+            ? JSON.parse(services)
+            : services;
+      } catch (error) {
+        await cleanupUploadedFile(req.file);
 
+        return res.status(400).json({
+          message: "Invalid services format"
+        });
+      }
+
+      if (!Array.isArray(parsedServices)) {
+        await cleanupUploadedFile(req.file);
+
+        return res.status(400).json({
+          message: "Services must be an array"
+        });
+      }
+
+      if (parsedServices.length > 0) {
+        const validServices = await Service.find({
+          _id: { $in: parsedServices },
+          salon: staff.salon,
+          isActive: true
+        }).select("_id");
+
+        if (
+          validServices.length !==
+          parsedServices.length
+        ) {
+          await cleanupUploadedFile(req.file);
+
+          return res.status(400).json({
+            message:
+              "One or more selected services are invalid"
+          });
+        }
+      }
+
+      staff.services = parsedServices;
+    }
+
+    /* =====================================================
+       WORKING HOURS
+    ===================================================== */
+
+    if (workingHours !== undefined) {
+      try {
         staff.workingHours =
           typeof workingHours === "string"
             ? JSON.parse(workingHours)
             : workingHours;
-
       } catch (error) {
+        await cleanupUploadedFile(req.file);
 
         return res.status(400).json({
           message:
             "Invalid working hours format"
         });
-
       }
     }
 
+    /* =====================================================
+       UPDATE PROFILE IMAGE
+    ===================================================== */
 
     if (req.file) {
-      if (staff.profileImage) {
+      /*
+        Save old image before replacing it.
+      */
+      const oldImage = staff.profileImage;
 
-        const cleanPath =
-          staff.profileImage.startsWith("/")
-            ? staff.profileImage.substring(1)
-            : staff.profileImage;
+      /*
+        New Cloudinary HTTPS URL.
+      */
+      staff.profileImage = req.file.path;
 
-        const oldImagePath =
-          require("path").join(
-            __dirname,
-            "..",
-            cleanPath
-          );
+      /*
+        Save staff first.
+      */
+      await staff.save();
 
-        try {
+      /*
+        Delete old Cloudinary image AFTER
+        successful DB save.
 
-          if (
-            require("fs").existsSync(
-              oldImagePath
-            )
-          ) {
-            require("fs").unlinkSync(
-              oldImagePath
-            );
-          }
-
-        } catch (deleteError) {
-
-          console.error(
-            "Failed to delete old staff image:",
-            deleteError.message
-          );
-
-        }
+        If old image is a local legacy path,
+        deleteCloudinaryImage() simply ignores it.
+      */
+      if (oldImage) {
+        await deleteCloudinaryImage(oldImage);
       }
-
-
-      staff.profileImage =
-        `/uploads/staff/${req.file.filename}`;
+    } else {
+      await staff.save();
     }
 
-
-    await staff.save();
-
+    /* =====================================================
+       RESPONSE
+    ===================================================== */
 
     res.status(200).json({
       message:
         "Staff updated successfully",
       staff
     });
-
   } catch (error) {
-
     console.error(
       "Update staff error:",
       error
     );
+
+    /*
+      If a new Cloudinary image was uploaded
+      but update failed, clean it up.
+    */
+    await cleanupUploadedFile(req.file);
 
     res.status(500).json({
       message:
@@ -500,14 +700,16 @@ const updateStaff = async (req, res) => {
   }
 };
 
+/* =========================================================
+   DELETE STAFF
+========================================================= */
+
 const deleteStaff = async (req, res) => {
   try {
-
     const staff =
       await Staff.findById(
         req.params.id
       );
-
 
     if (!staff) {
       return res.status(404).json({
@@ -515,15 +717,15 @@ const deleteStaff = async (req, res) => {
       });
     }
 
+    /* =====================================================
+       OWNER AUTHORIZATION
+    ===================================================== */
 
-    // OWNER AUTHORIZATION
     if (req.user.role !== "ADMIN") {
-
       const user =
         await User.findById(
           req.user.userId
         );
-
 
       if (
         !user ||
@@ -535,7 +737,6 @@ const deleteStaff = async (req, res) => {
             "You are not associated with any salon"
         });
       }
-
 
       if (
         !hasSalonAccess(
@@ -550,55 +751,40 @@ const deleteStaff = async (req, res) => {
       }
     }
 
-    if (staff.profileImage) {
+    /* =====================================================
+       SAVE IMAGE URL
+    ===================================================== */
 
-      const cleanPath =
-        staff.profileImage.startsWith("/")
-          ? staff.profileImage.substring(1)
-          : staff.profileImage;
+    const staffImage =
+      staff.profileImage;
 
-      const imagePath =
-        require("path").join(
-          __dirname,
-          "..",
-          cleanPath
-        );
-
-      try {
-
-        if (
-          require("fs").existsSync(
-            imagePath
-          )
-        ) {
-          require("fs").unlinkSync(
-            imagePath
-          );
-        }
-
-      } catch (deleteError) {
-
-        console.error(
-          "Failed to delete staff image:",
-          deleteError.message
-        );
-
-      }
-    }
-
+    /* =====================================================
+       DELETE STAFF
+    ===================================================== */
 
     await Staff.findByIdAndDelete(
       req.params.id
     );
 
+    /* =====================================================
+       DELETE CLOUDINARY IMAGE
+    ===================================================== */
+
+    if (staffImage) {
+      await deleteCloudinaryImage(
+        staffImage
+      );
+    }
+
+    /* =====================================================
+       RESPONSE
+    ===================================================== */
 
     res.status(200).json({
       message:
         "Staff deleted successfully"
     });
-
   } catch (error) {
-
     console.error(
       "Delete staff error:",
       error
@@ -611,14 +797,17 @@ const deleteStaff = async (req, res) => {
     });
   }
 };
+
+/* =========================================================
+   ACTIVATE STAFF
+========================================================= */
+
 const activateStaff = async (req, res) => {
   try {
-
     const staff =
       await Staff.findById(
         req.params.id
       );
-
 
     if (!staff) {
       return res.status(404).json({
@@ -626,14 +815,15 @@ const activateStaff = async (req, res) => {
       });
     }
 
+    /* =====================================================
+       OWNER AUTHORIZATION
+    ===================================================== */
 
     if (req.user.role !== "ADMIN") {
-
       const user =
         await User.findById(
           req.user.userId
         );
-
 
       if (
         !user ||
@@ -645,7 +835,6 @@ const activateStaff = async (req, res) => {
             "You are not associated with any salon"
         });
       }
-
 
       if (
         !hasSalonAccess(
@@ -660,20 +849,20 @@ const activateStaff = async (req, res) => {
       }
     }
 
+    /* =====================================================
+       ACTIVATE
+    ===================================================== */
 
     staff.isActive = true;
 
     await staff.save();
-
 
     res.status(200).json({
       message:
         "Staff activated successfully",
       staff
     });
-
   } catch (error) {
-
     console.error(
       "Activate staff error:",
       error
@@ -687,14 +876,16 @@ const activateStaff = async (req, res) => {
   }
 };
 
+/* =========================================================
+   DEACTIVATE STAFF
+========================================================= */
+
 const deactivateStaff = async (req, res) => {
   try {
-
     const staff =
       await Staff.findById(
         req.params.id
       );
-
 
     if (!staff) {
       return res.status(404).json({
@@ -702,14 +893,15 @@ const deactivateStaff = async (req, res) => {
       });
     }
 
+    /* =====================================================
+       OWNER AUTHORIZATION
+    ===================================================== */
 
     if (req.user.role !== "ADMIN") {
-
       const user =
         await User.findById(
           req.user.userId
         );
-
 
       if (
         !user ||
@@ -721,7 +913,6 @@ const deactivateStaff = async (req, res) => {
             "You are not associated with any salon"
         });
       }
-
 
       if (
         !hasSalonAccess(
@@ -736,20 +927,20 @@ const deactivateStaff = async (req, res) => {
       }
     }
 
+    /* =====================================================
+       DEACTIVATE
+    ===================================================== */
 
     staff.isActive = false;
 
     await staff.save();
-
 
     res.status(200).json({
       message:
         "Staff deactivated successfully",
       staff
     });
-
   } catch (error) {
-
     console.error(
       "Deactivate staff error:",
       error
@@ -763,15 +954,17 @@ const deactivateStaff = async (req, res) => {
   }
 };
 
+/* =========================================================
+   ADD STAFF LEAVE
+========================================================= */
+
 const addStaffLeave = async (req, res) => {
   try {
-
     const {
       startDate,
       endDate,
       reason
     } = req.body;
-
 
     if (!startDate || !endDate) {
       return res.status(400).json({
@@ -780,24 +973,20 @@ const addStaffLeave = async (req, res) => {
       });
     }
 
-
     const start =
       new Date(startDate);
 
     const end =
       new Date(endDate);
 
-
     if (
       isNaN(start.getTime()) ||
       isNaN(end.getTime())
     ) {
       return res.status(400).json({
-        message:
-          "Invalid date"
+        message: "Invalid date"
       });
     }
-
 
     if (start > end) {
       return res.status(400).json({
@@ -806,12 +995,10 @@ const addStaffLeave = async (req, res) => {
       });
     }
 
-
     const staff =
       await Staff.findById(
         req.params.id
       );
-
 
     if (!staff) {
       return res.status(404).json({
@@ -819,13 +1006,16 @@ const addStaffLeave = async (req, res) => {
           "Staff not found"
       });
     }
-    if (req.user.role !== "ADMIN") {
 
+    /* =====================================================
+       OWNER AUTHORIZATION
+    ===================================================== */
+
+    if (req.user.role !== "ADMIN") {
       const user =
         await User.findById(
           req.user.userId
         );
-
 
       if (
         !user ||
@@ -837,7 +1027,6 @@ const addStaffLeave = async (req, res) => {
             "You are not associated with any salon"
         });
       }
-
 
       if (
         !hasSalonAccess(
@@ -852,10 +1041,13 @@ const addStaffLeave = async (req, res) => {
       }
     }
 
+    /* =====================================================
+       CHECK OVERLAPPING LEAVE
+    ===================================================== */
+
     const overlappingLeave =
       staff.leaves.some(
         (leave) => {
-
           const existingStart =
             new Date(
               leave.startDate
@@ -866,15 +1058,12 @@ const addStaffLeave = async (req, res) => {
               leave.endDate
             );
 
-
           return (
             start <= existingEnd &&
             end >= existingStart
           );
-
         }
       );
-
 
     if (overlappingLeave) {
       return res.status(400).json({
@@ -883,6 +1072,9 @@ const addStaffLeave = async (req, res) => {
       });
     }
 
+    /* =====================================================
+       ADD LEAVE
+    ===================================================== */
 
     staff.leaves.push({
       startDate: start,
@@ -890,18 +1082,14 @@ const addStaffLeave = async (req, res) => {
       reason
     });
 
-
     await staff.save();
-
 
     res.status(201).json({
       message:
         "Staff leave added successfully",
       staff
     });
-
   } catch (error) {
-
     console.error(
       "Add staff leave error:",
       error
@@ -914,22 +1102,24 @@ const addStaffLeave = async (req, res) => {
     });
   }
 };
+
+/* =========================================================
+   REMOVE STAFF LEAVE
+========================================================= */
+
 const removeStaffLeave = async (
   req,
   res
 ) => {
   try {
-
     const {
       leaveIndex
     } = req.params;
-
 
     const staff =
       await Staff.findById(
         req.params.id
       );
-
 
     if (!staff) {
       return res.status(404).json({
@@ -937,13 +1127,16 @@ const removeStaffLeave = async (
           "Staff not found"
       });
     }
-    if (req.user.role !== "ADMIN") {
 
+    /* =====================================================
+       OWNER AUTHORIZATION
+    ===================================================== */
+
+    if (req.user.role !== "ADMIN") {
       const user =
         await User.findById(
           req.user.userId
         );
-
 
       if (
         !user ||
@@ -955,7 +1148,6 @@ const removeStaffLeave = async (
             "You are not associated with any salon"
         });
       }
-
 
       if (
         !hasSalonAccess(
@@ -970,10 +1162,12 @@ const removeStaffLeave = async (
       }
     }
 
+    /* =====================================================
+       VALIDATE INDEX
+    ===================================================== */
 
     const index =
       Number(leaveIndex);
-
 
     if (
       isNaN(index) ||
@@ -986,24 +1180,23 @@ const removeStaffLeave = async (
       });
     }
 
+    /* =====================================================
+       REMOVE LEAVE
+    ===================================================== */
 
     staff.leaves.splice(
       index,
       1
     );
 
-
     await staff.save();
-
 
     res.status(200).json({
       message:
         "Staff leave removed successfully",
       staff
     });
-
   } catch (error) {
-
     console.error(
       "Remove staff leave error:",
       error
@@ -1017,62 +1210,97 @@ const removeStaffLeave = async (
   }
 };
 
-const getStaffByService = async (req, res) => {
+/* =========================================================
+   GET STAFF BY SERVICE
+========================================================= */
+
+const getStaffByService = async (
+  req,
+  res
+) => {
   try {
-    const { salonId, serviceId } = req.params;
+    const {
+      salonId,
+      serviceId
+    } = req.params;
 
     if (!salonId || !serviceId) {
       return res.status(400).json({
-        message: "Salon ID and Service ID are required"
+        message:
+          "Salon ID and Service ID are required"
       });
     }
 
-    const salon = await Salon.findById(salonId).select(
-      "name city address isActive"
-    );
+    /* =====================================================
+       CHECK SALON
+    ===================================================== */
+
+    const salon =
+      await Salon.findById(
+        salonId
+      ).select(
+        "name city address isActive"
+      );
 
     if (!salon) {
       return res.status(404).json({
-        message: "Salon not found"
+        message:
+          "Salon not found"
       });
     }
 
     if (!salon.isActive) {
       return res.status(400).json({
-        message: "Salon is inactive"
+        message:
+          "Salon is inactive"
       });
     }
 
-    const service = await Service.findOne({
-      _id: serviceId,
-      salon: salonId,
-      isActive: true
-    }).populate(
-      "category",
-      "name description"
-    );
+    /* =====================================================
+       CHECK SERVICE
+    ===================================================== */
+
+    const service =
+      await Service.findOne({
+        _id: serviceId,
+        salon: salonId,
+        isActive: true
+      }).populate(
+        "category",
+        "name description"
+      );
 
     if (!service) {
       return res.status(404).json({
-        message: "Service not found in this salon"
+        message:
+          "Service not found in this salon"
       });
     }
 
-    const staff = await Staff.find({
-      salon: salonId,
-      services: serviceId,
-      isActive: true
-    })
-      .select(
-        "name specialization services phone profileImage workingHours isActive"
-      )
-      .populate(
-        "services",
-        "name price duration category isActive"
-      )
-      .sort({
-        name: 1
-      });
+    /* =====================================================
+       FETCH STAFF
+    ===================================================== */
+
+    const staff =
+      await Staff.find({
+        salon: salonId,
+        services: serviceId,
+        isActive: true
+      })
+        .select(
+          "name specialization services phone profileImage workingHours isActive"
+        )
+        .populate(
+          "services",
+          "name price duration category isActive"
+        )
+        .sort({
+          name: 1
+        });
+
+    /* =====================================================
+       RESPONSE
+    ===================================================== */
 
     return res.status(200).json({
       count: staff.length,
@@ -1091,7 +1319,6 @@ const getStaffByService = async (req, res) => {
 
       staff
     });
-
   } catch (error) {
     console.error(
       "Get staff by service error:",
@@ -1099,76 +1326,132 @@ const getStaffByService = async (req, res) => {
     );
 
     return res.status(500).json({
-      message: "Failed to fetch staff for service",
+      message:
+        "Failed to fetch staff for service",
       error: error.message
     });
   }
 };
 
-const getStaffAvailability = async (req, res) => {
+/* =========================================================
+   GET STAFF AVAILABILITY
+========================================================= */
+
+const getStaffAvailability = async (
+  req,
+  res
+) => {
   try {
-    const { date } = req.query;
+    const {
+      date
+    } = req.query;
 
     if (!date) {
       return res.status(400).json({
-        message: "Date is required"
+        message:
+          "Date is required"
       });
     }
 
-    const selectedDate = new Date(date);
+    const selectedDate =
+      new Date(date);
 
-    if (isNaN(selectedDate.getTime())) {
+    if (
+      isNaN(
+        selectedDate.getTime()
+      )
+    ) {
       return res.status(400).json({
-        message: "Invalid date"
+        message:
+          "Invalid date"
       });
     }
 
-    const staff = await Staff.findById(req.params.id)
-      .populate(
+    /* =====================================================
+       FETCH STAFF
+    ===================================================== */
+
+    const staff =
+      await Staff.findById(
+        req.params.id
+      ).populate(
         "salon",
         "name city owner isActive"
       );
 
     if (!staff) {
       return res.status(404).json({
-        message: "Staff not found"
+        message:
+          "Staff not found"
       });
     }
+
     if (!staff.salon) {
       return res.status(400).json({
-        message: "Staff is not associated with a salon"
+        message:
+          "Staff is not associated with a salon"
       });
     }
+
+    /* =====================================================
+       CHECK SALON
+    ===================================================== */
 
     if (!staff.salon.isActive) {
       return res.status(200).json({
         available: false,
-        reason: "Salon is currently inactive"
+        reason:
+          "Salon is currently inactive"
       });
     }
+
+    /* =====================================================
+       CHECK STAFF
+    ===================================================== */
+
     if (!staff.isActive) {
       return res.status(200).json({
         available: false,
-        reason: "Staff is currently inactive"
+        reason:
+          "Staff is currently inactive"
       });
     }
-    const onLeave = staff.leaves.some((leave) => {
-      const start = new Date(leave.startDate);
-      const end = new Date(leave.endDate);
 
-      return (
-        selectedDate >= start &&
-        selectedDate <= end
+    /* =====================================================
+       CHECK LEAVE
+    ===================================================== */
+
+    const onLeave =
+      staff.leaves.some(
+        (leave) => {
+          const start =
+            new Date(
+              leave.startDate
+            );
+
+          const end =
+            new Date(
+              leave.endDate
+            );
+
+          return (
+            selectedDate >= start &&
+            selectedDate <= end
+          );
+        }
       );
-    });
 
     if (onLeave) {
       return res.status(200).json({
         available: false,
-        reason: "Staff is on leave"
+        reason:
+          "Staff is on leave"
       });
     }
 
+    /* =====================================================
+       DAY MAP
+    ===================================================== */
 
     const dayMap = [
       "SUNDAY",
@@ -1180,25 +1463,40 @@ const getStaffAvailability = async (req, res) => {
       "SATURDAY"
     ];
 
-    const day = dayMap[selectedDate.getUTCDay()];
+    const day =
+      dayMap[
+        selectedDate.getUTCDay()
+      ];
 
-    const workingHour = staff.workingHours.find(
-      (item) => item.day === day
-    );
+    /* =====================================================
+       WORKING HOUR
+    ===================================================== */
+
+    const workingHour =
+      staff.workingHours.find(
+        (item) =>
+          item.day === day
+      );
 
     if (!workingHour) {
       return res.status(200).json({
         available: false,
-        reason: "Working hours not configured for this day"
+        reason:
+          "Working hours not configured for this day"
       });
     }
 
     if (!workingHour.isWorking) {
       return res.status(200).json({
         available: false,
-        reason: "Staff is not working on this day"
+        reason:
+          "Staff is not working on this day"
       });
     }
+
+    /* =====================================================
+       RESPONSE
+    ===================================================== */
 
     return res.status(200).json({
       available: true,
@@ -1208,18 +1506,20 @@ const getStaffAvailability = async (req, res) => {
       day,
 
       workingHours: {
-        startTime: workingHour.startTime,
-        endTime: workingHour.endTime
+        startTime:
+          workingHour.startTime,
+        endTime:
+          workingHour.endTime
       },
 
       staff: {
         id: staff._id,
         name: staff.name,
-        specialization: staff.specialization,
+        specialization:
+          staff.specialization,
         salon: staff.salon
       }
     });
-
   } catch (error) {
     console.error(
       "Get staff availability error:",
@@ -1227,35 +1527,27 @@ const getStaffAvailability = async (req, res) => {
     );
 
     return res.status(500).json({
-      message: "Failed to check staff availability",
+      message:
+        "Failed to check staff availability",
       error: error.message
     });
   }
 };
 
+/* =========================================================
+   EXPORTS
+========================================================= */
 
 module.exports = {
-
   createStaff,
-
   getAllStaff,
-
   getStaffById,
-
   updateStaff,
-
   deleteStaff,
-
   activateStaff,
-
   deactivateStaff,
-
   addStaffLeave,
-
   removeStaffLeave,
-
   getStaffAvailability,
-  
   getStaffByService
-
 };

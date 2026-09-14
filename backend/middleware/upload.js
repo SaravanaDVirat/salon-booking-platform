@@ -1,18 +1,12 @@
 const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const cloudinary = require("cloudinary").v2;
 
-const staffUploadPath = path.join(__dirname, "../uploads/staff");
-const salonUploadPath = path.join(__dirname, "../uploads/salons");
-
-if (!fs.existsSync(staffUploadPath)) {
-  fs.mkdirSync(staffUploadPath, { recursive: true });
-}
-
-if (!fs.existsSync(salonUploadPath)) {
-  fs.mkdirSync(salonUploadPath, { recursive: true });
-}
-
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 const fileFilter = (req, file, cb) => {
   const allowedTypes = [
@@ -28,44 +22,41 @@ const fileFilter = (req, file, cb) => {
   } else {
     cb(
       new Error(
-        "Only JPG, JPEG, PNG and WEBP image files are allowed"
+        "Only JPG, JPEG, PNG, WEBP and AVIF image files are allowed"
       )
     );
   }
 };
 
-const staffStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, staffUploadPath);
-  },
-
-  filename: (req, file, cb) => {
-    const uniqueName =
-      Date.now() +
-      "-" +
-      Math.round(Math.random() * 1e9) +
-      path.extname(file.originalname);
-
-    cb(null, uniqueName);
+const staffStorage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "salon-booking/staff",
+    allowed_formats: [
+      "jpg",
+      "jpeg",
+      "png",
+      "webp",
+      "avif"
+    ],
+    resource_type: "image"
   }
 });
 
-const salonStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, salonUploadPath);
-  },
-
-  filename: (req, file, cb) => {
-    const uniqueName =
-      Date.now() +
-      "-" +
-      Math.round(Math.random() * 1e9) +
-      path.extname(file.originalname);
-
-    cb(null, uniqueName);
+const salonStorage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "salon-booking/salons",
+    allowed_formats: [
+      "jpg",
+      "jpeg",
+      "png",
+      "webp",
+      "avif"
+    ],
+    resource_type: "image"
   }
 });
-
 
 const staffUpload = multer({
   storage: staffStorage,

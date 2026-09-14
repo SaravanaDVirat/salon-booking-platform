@@ -2,11 +2,9 @@ const Salon = require("../models/Salon");
 const Service = require("../models/Service");
 const Staff = require("../models/Staff");
 const Appointment = require("../models/Appointment");
-
-const fs = require("fs");
-const path = require("path");
 const User = require("../models/User");
 
+const cloudinary = require("cloudinary").v2;
 
 const parseJSON = (value, fallback = undefined) => {
   if (value === undefined || value === null || value === "") {
@@ -24,35 +22,135 @@ const parseJSON = (value, fallback = undefined) => {
   }
 };
 
-
-const deleteFile = (filePath) => {
-  if (!filePath) return;
+const getCloudinaryPublicId = (imageUrl) => {
+  if (!imageUrl || typeof imageUrl !== "string") {
+    return null;
+  }
 
   try {
-    const cleanPath = filePath.startsWith("/")
-      ? filePath.substring(1)
-      : filePath;
 
-    const absolutePath = path.join(
-      __dirname,
-      "..",
-      cleanPath
+    if (!imageUrl.includes("res.cloudinary.com")) {
+      return null;
+    }
+
+    const uploadIndex = imageUrl.indexOf("/upload/");
+
+    if (uploadIndex === -1) {
+      return null;
+    }
+
+    let publicId = imageUrl.substring(
+      uploadIndex + "/upload/".length
     );
 
-    if (fs.existsSync(absolutePath)) {
-      fs.unlinkSync(absolutePath);
-    }
+    // Remove version part: v123456789/
+    publicId = publicId.replace(
+      /^v\d+\//,
+      ""
+    );
+
+    // Remove file extension
+    publicId = publicId.replace(
+      /\.[^/.]+$/,
+      ""
+    );
+
+    return publicId || null;
   } catch (error) {
     console.error(
-      "Failed to delete file:",
+      "Failed to extract Cloudinary public ID:",
+      error.message
+    );
+
+    return null;
+  }
+};
+
+// =====================================================
+// DELETE CLOUDINARY IMAGE
+// =====================================================
+const deleteCloudinaryImage = async (imageUrl) => {
+  const publicId =
+    getCloudinaryPublicId(imageUrl);
+
+  if (!publicId) {
+    return;
+  }
+
+  try {
+    await cloudinary.uploader.destroy(
+      publicId,
+      {
+        resource_type: "image"
+      }
+    );
+
+    console.log(
+      `Cloudinary image deleted: ${publicId}`
+    );
+  } catch (error) {
+    console.error(
+      "Failed to delete Cloudinary image:",
       error.message
     );
   }
 };
 
+// =====================================================
+// DELETE MULTIPLE CLOUDINARY IMAGES
+// =====================================================
+const deleteCloudinaryImages = async (
+  images = []
+) => {
+  if (!Array.isArray(images) || images.length === 0) {
+    return;
+  }
+
+  await Promise.all(
+    images.map((image) =>
+      deleteCloudinaryImage(image)
+    )
+  );
+};
+
+// =====================================================
+// CLEANUP NEWLY UPLOADED CLOUDINARY FILES
+// =====================================================
+const cleanupUploadedFiles = async (
+  files = []
+) => {
+  if (!Array.isArray(files) || files.length === 0) {
+    return;
+  }
+
+  await Promise.all(
+    files.map(async (file) => {
+      try {
+        if (file.public_id) {
+          await cloudinary.uploader.destroy(
+            file.public_id,
+            {
+              resource_type: "image"
+            }
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Failed to cleanup uploaded Cloudinary image:",
+          error.message
+        );
+      }
+    })
+  );
+};
+
+// =====================================================
+// OWNER DASHBOARD
+// =====================================================
 const getOwnerDashboard = async (req, res) => {
   try {
     const ownerId = req.user.userId;
+
     const salons = await Salon.find({
       owner: ownerId
     }).sort({
@@ -62,6 +160,7 @@ const getOwnerDashboard = async (req, res) => {
     const salonIds = salons.map(
       (salon) => salon._id
     );
+
     if (salonIds.length === 0) {
       return res.status(200).json({
         stats: {
@@ -81,7 +180,6 @@ const getOwnerDashboard = async (req, res) => {
       });
     }
 
-
     const [
       totalServices,
       totalStaff,
@@ -90,7 +188,6 @@ const getOwnerDashboard = async (req, res) => {
       confirmedAppointments,
       completedAppointments
     ] = await Promise.all([
-
       Service.countDocuments({
         salon: {
           $in: salonIds
@@ -131,10 +228,8 @@ const getOwnerDashboard = async (req, res) => {
       })
     ]);
 
-
     const upcomingAppointments =
       await Appointment.find({
-
         salon: {
           $in: salonIds
         },
@@ -149,7 +244,6 @@ const getOwnerDashboard = async (req, res) => {
             "CONFIRMED"
           ]
         }
-
       })
         .populate(
           "customer",
@@ -172,9 +266,7 @@ const getOwnerDashboard = async (req, res) => {
         })
         .limit(6);
 
-
     res.status(200).json({
-
       stats: {
         totalSalons: salons.length,
 
@@ -193,11 +285,8 @@ const getOwnerDashboard = async (req, res) => {
       salons,
 
       upcomingAppointments
-
     });
-
   } catch (error) {
-
     console.error(
       "Owner dashboard error:",
       error
@@ -209,9 +298,12 @@ const getOwnerDashboard = async (req, res) => {
     });
   }
 };
+
+// =====================================================
+// CREATE SALON
+// =====================================================
 const createSalon = async (req, res) => {
   try {
-
     const {
       name,
       description,
@@ -224,7 +316,6 @@ const createSalon = async (req, res) => {
       owner
     } = req.body;
 
-
     if (!name || !address || !city) {
       return res.status(400).json({
         message:
@@ -232,19 +323,13 @@ const createSalon = async (req, res) => {
       });
     }
 
-
     let ownerId;
+
     if (req.user.role === "ADMIN") {
-
       ownerId = owner;
-
-    }
-    else {
-
+    } else {
       ownerId = req.user.userId;
-
     }
-
 
     if (!ownerId) {
       return res.status(400).json({
@@ -255,7 +340,6 @@ const createSalon = async (req, res) => {
 
     const ownerUser =
       await User.findById(ownerId);
-
 
     if (!ownerUser) {
       return res.status(404).json({
@@ -271,13 +355,11 @@ const createSalon = async (req, res) => {
       });
     }
 
-
     const parsedLocation =
       parseJSON(
         location,
         undefined
       );
-
 
     const parsedWorkingHours =
       parseJSON(
@@ -285,16 +367,16 @@ const createSalon = async (req, res) => {
         []
       );
 
-
+    // =================================================
+    // CLOUDINARY IMAGE URLS
+    // =================================================
     const images =
       (req.files || []).map(
-        (file) =>
-          `/uploads/salons/${file.filename}`
+        (file) => file.path
       );
 
     const salon =
       await Salon.create({
-
         name: name.trim(),
 
         description,
@@ -315,18 +397,15 @@ const createSalon = async (req, res) => {
 
         workingHours:
           parsedWorkingHours
-
       });
 
     await User.findByIdAndUpdate(
       ownerUser._id,
-
       {
         $addToSet: {
           salons: salon._id
         }
       },
-
       {
         new: true
       }
@@ -340,9 +419,7 @@ const createSalon = async (req, res) => {
         "name email phone"
       );
 
-
     res.status(201).json({
-
       success: true,
 
       message:
@@ -350,51 +427,17 @@ const createSalon = async (req, res) => {
 
       salon:
         populatedSalon
-
     });
-
   } catch (error) {
-
     console.error(
       "Create salon error:",
       error
     );
-    if (
-      req.files &&
-      req.files.length > 0
-    ) {
 
-      req.files.forEach(
-        (file) => {
-
-          try {
-
-            if (
-              fs.existsSync(
-                file.path
-              )
-            ) {
-
-              fs.unlinkSync(
-                file.path
-              );
-
-            }
-
-          } catch (deleteError) {
-
-            console.error(
-              "Failed to cleanup image:",
-              deleteError.message
-            );
-
-          }
-
-        }
-      );
-
-    }
-
+    // Cleanup Cloudinary uploads if DB creation fails
+    await cleanupUploadedFiles(
+      req.files || []
+    );
 
     res.status(500).json({
       message:
@@ -403,10 +446,11 @@ const createSalon = async (req, res) => {
   }
 };
 
-
+// =====================================================
+// GET ALL SALONS
+// =====================================================
 const getAllSalons = async (req, res) => {
   try {
-
     const {
       search,
       city,
@@ -414,64 +458,48 @@ const getAllSalons = async (req, res) => {
       limit = 10
     } = req.query;
 
-
     const filter = {
       isActive: true
     };
 
-
     if (search) {
-
       filter.name = {
         $regex: search,
         $options: "i"
       };
-
     }
 
-
     if (city) {
-
       filter.city = {
         $regex: `^${city}$`,
         $options: "i"
       };
-
     }
-
 
     const skip =
       (Number(page) - 1) *
       Number(limit);
 
-
     const salons =
       await Salon.find(filter)
-
         .populate(
           "owner",
           "name email"
         )
-
         .sort({
           createdAt: -1
         })
-
         .skip(skip)
-
         .limit(
           Number(limit)
         );
-
 
     const total =
       await Salon.countDocuments(
         filter
       );
 
-
     res.status(200).json({
-
       total,
 
       page:
@@ -487,11 +515,8 @@ const getAllSalons = async (req, res) => {
         ),
 
       salons
-
     });
-
   } catch (error) {
-
     console.error(
       "Get all salons error:",
       error
@@ -504,38 +529,32 @@ const getAllSalons = async (req, res) => {
   }
 };
 
+// =====================================================
+// GET SALON BY ID
+// =====================================================
 const getSalonById = async (req, res) => {
   try {
-
     const salon =
       await Salon.findOne({
-
         _id: req.params.id,
 
         isActive: true
-
       }).populate(
         "owner",
         "name email"
       );
 
-
     if (!salon) {
-
       return res.status(404).json({
         message:
           "Salon not found"
       });
-
     }
-
 
     res.status(200).json({
       salon
     });
-
   } catch (error) {
-
     console.error(
       "Get salon by id error:",
       error
@@ -548,33 +567,26 @@ const getSalonById = async (req, res) => {
   }
 };
 
+// =====================================================
+// GET MY SALONS
+// =====================================================
 const getMySalons = async (req, res) => {
   try {
-
     const salons =
       await Salon.find({
-
         owner:
           req.user.userId
-
       }).sort({
-
         createdAt: -1
-
       });
 
-
     res.status(200).json({
-
       count:
         salons.length,
 
       salons
-
     });
-
   } catch (error) {
-
     console.error(
       "Get my salons error:",
       error
@@ -587,43 +599,36 @@ const getMySalons = async (req, res) => {
   }
 };
 
+// =====================================================
+// UPDATE SALON
+// =====================================================
 const updateSalon = async (req, res) => {
   try {
-
     const salon =
       await Salon.findById(
         req.params.id
       );
 
-
     if (!salon) {
-
       return res.status(404).json({
         message:
           "Salon not found"
       });
-
     }
-
 
     const isOwner =
       salon.owner.toString() ===
       req.user.userId;
 
-
     const isAdmin =
       req.user.role === "ADMIN";
 
-
     if (!isOwner && !isAdmin) {
-
       return res.status(403).json({
         message:
           "You are not authorized to update this salon"
       });
-
     }
-
 
     const {
       name,
@@ -636,42 +641,34 @@ const updateSalon = async (req, res) => {
       workingHours
     } = req.body;
 
-
     if (name !== undefined) {
       salon.name = name;
     }
-
 
     if (description !== undefined) {
       salon.description =
         description;
     }
 
-
     if (phone !== undefined) {
       salon.phone = phone;
     }
 
-
     if (email !== undefined) {
       salon.email = email;
     }
-
 
     if (address !== undefined) {
       salon.address =
         address;
     }
 
-
     if (city !== undefined) {
       salon.city =
         city;
     }
 
-
     if (location !== undefined) {
-
       const parsedLocation =
         parseJSON(
           location,
@@ -680,12 +677,9 @@ const updateSalon = async (req, res) => {
 
       salon.location =
         parsedLocation;
-
     }
 
-
     if (workingHours !== undefined) {
-
       const parsedWorkingHours =
         parseJSON(
           workingHours,
@@ -694,36 +688,37 @@ const updateSalon = async (req, res) => {
 
       salon.workingHours =
         parsedWorkingHours;
-
     }
 
+    // =================================================
+    // REPLACE SALON IMAGES
+    // =================================================
     if (
       req.files &&
       req.files.length > 0
     ) {
-
       const oldImages =
         salon.images || [];
 
-
-      oldImages.forEach(
-        (image) => {
-          deleteFile(image);
-        }
-      );
-
-
-      salon.images =
+      // New Cloudinary URLs
+      const newImages =
         req.files.map(
-          (file) =>
-            `/uploads/salons/${file.filename}`
+          (file) => file.path
         );
 
+      // Save new images first
+      salon.images =
+        newImages;
+
+      await salon.save();
+
+      // Delete old Cloudinary images
+      await deleteCloudinaryImages(
+        oldImages
+      );
+    } else {
+      await salon.save();
     }
-
-
-    await salon.save();
-
 
     const updatedSalon =
       await Salon.findById(
@@ -733,9 +728,7 @@ const updateSalon = async (req, res) => {
         "name email phone"
       );
 
-
     res.status(200).json({
-
       success: true,
 
       message:
@@ -743,51 +736,17 @@ const updateSalon = async (req, res) => {
 
       salon:
         updatedSalon
-
     });
-
   } catch (error) {
-
     console.error(
       "Update salon error:",
       error
     );
-    if (
-      req.files &&
-      req.files.length > 0
-    ) {
 
-      req.files.forEach(
-        (file) => {
-
-          try {
-
-            if (
-              fs.existsSync(
-                file.path
-              )
-            ) {
-
-              fs.unlinkSync(
-                file.path
-              );
-
-            }
-
-          } catch (deleteError) {
-
-            console.error(
-              "Failed to cleanup image:",
-              deleteError.message
-            );
-
-          }
-
-        }
-      );
-
-    }
-
+    // Cleanup newly uploaded Cloudinary images
+    await cleanupUploadedFiles(
+      req.files || []
+    );
 
     res.status(500).json({
       message:
@@ -796,87 +755,67 @@ const updateSalon = async (req, res) => {
   }
 };
 
+// =====================================================
+// DELETE SALON
+// =====================================================
 const deleteSalon = async (req, res) => {
   try {
-
     const salon =
       await Salon.findById(
         req.params.id
       );
 
-
     if (!salon) {
-
       return res.status(404).json({
         message:
           "Salon not found"
       });
-
     }
-
 
     const isOwner =
       salon.owner.toString() ===
       req.user.userId;
 
-
     const isAdmin =
       req.user.role === "ADMIN";
 
-
     if (!isOwner && !isAdmin) {
-
       return res.status(403).json({
         message:
           "You are not authorized to delete this salon"
       });
-
     }
 
-    if (
-      salon.images &&
-      salon.images.length > 0
-    ) {
-
-      salon.images.forEach(
-        (image) => {
-          deleteFile(image);
-        }
-      );
-
-    }
+    const salonImages =
+      salon.images || [];
 
     await Salon.findByIdAndDelete(
       salon._id
     );
+
     if (salon.owner) {
-
       await User.findByIdAndUpdate(
-
         salon.owner,
-
         {
           $pull: {
             salons: salon._id
           }
         }
-
       );
-
     }
 
+    // Delete Cloudinary images after DB deletion
+    await deleteCloudinaryImages(
+      salonImages
+    );
 
     res.status(200).json({
-
       success: true,
 
       message:
         "Salon deleted successfully"
-
     });
-
   } catch (error) {
-
     console.error(
       "Delete salon error:",
       error
@@ -889,53 +828,44 @@ const deleteSalon = async (req, res) => {
   }
 };
 
+// =====================================================
+// UPDATE SALON STATUS
+// =====================================================
 const updateSalonStatus = async (
   req,
   res
 ) => {
   try {
-
     const salon =
       await Salon.findById(
         req.params.id
       );
 
-
     if (!salon) {
-
       return res.status(404).json({
         message:
           "Salon not found"
       });
-
     }
-
 
     const isOwner =
       salon.owner.toString() ===
       req.user.userId;
 
-
     const isAdmin =
       req.user.role === "ADMIN";
 
-
     if (!isOwner && !isAdmin) {
-
       return res.status(403).json({
         message:
           "You are not authorized"
       });
-
     }
-
 
     salon.isActive =
       req.body.isActive;
 
-
     await salon.save();
-
 
     const updatedSalon =
       await Salon.findById(
@@ -945,9 +875,7 @@ const updateSalonStatus = async (
         "name email phone"
       );
 
-
     res.status(200).json({
-
       success: true,
 
       message:
@@ -957,11 +885,8 @@ const updateSalonStatus = async (
 
       salon:
         updatedSalon
-
     });
-
   } catch (error) {
-
     console.error(
       "Update salon status error:",
       error
@@ -974,23 +899,13 @@ const updateSalonStatus = async (
   }
 };
 
-
 module.exports = {
-
   createSalon,
-
   getAllSalons,
-
   getSalonById,
-
   getMySalons,
-
   updateSalon,
-
   deleteSalon,
-
   updateSalonStatus,
-
   getOwnerDashboard
-
 };
