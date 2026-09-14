@@ -27,6 +27,7 @@ export default function AdminLogin() {
 
   const emailRef = useRef(null);
   const passwordRef = useRef(null);
+  const focusedInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
     email: "",
@@ -37,7 +38,6 @@ export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const [focusedField, setFocusedField] = useState("");
 
   const isDesktop = width >= 1050;
   const isTablet = width >= 700 && width < 1050;
@@ -196,7 +196,9 @@ export default function AdminLogin() {
             },
           ]}
           showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
+          keyboardShouldPersistTaps="always"
+          keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "none"}
+          nestedScrollEnabled
         >
           <View
             style={[
@@ -541,8 +543,6 @@ export default function AdminLogin() {
                   <View
                     style={[
                       styles.inputContainer,
-                      focusedField === "email" &&
-                        styles.inputContainerFocused,
                       error &&
                         !formData.email.trim() &&
                         styles.inputContainerError,
@@ -551,37 +551,39 @@ export default function AdminLogin() {
                     <Ionicons
                       name="mail-outline"
                       size={22}
-                      color={
-                        focusedField === "email"
-                          ? "#7C3AED"
-                          : "#94A3B8"
-                      }
+                      color="#94A3B8"
                     />
 
                     <TextInput
                       ref={emailRef}
                       style={styles.textInput}
                       value={formData.email}
-                      onChangeText={(value) =>
-                        updateField("email", value)
-                      }
+                      onChangeText={(value) => updateField("email", value)}
                       placeholder="admin@salon.com"
                       placeholderTextColor="#94A3B8"
                       keyboardType="email-address"
+                      inputMode="email"
                       autoCapitalize="none"
                       autoCorrect={false}
-                      autoComplete="email"
+                      spellCheck={false}
+                      autoComplete="off"
+                      textContentType="none"
                       editable={!loading}
                       returnKeyType="next"
-                      onFocus={() =>
-                        setFocusedField("email")
-                      }
-                      onBlur={() =>
-                        setFocusedField("")
-                      }
-                      onSubmitEditing={() =>
-                        passwordRef.current?.focus()
-                      }
+                      blurOnSubmit={false}
+                      onFocus={() => {
+                        focusedInputRef.current = "email";
+                      }}
+                      onBlur={() => {
+                        if (focusedInputRef.current === "email") {
+                          focusedInputRef.current = null;
+                        }
+                      }}
+                      onSubmitEditing={() => {
+                        requestAnimationFrame(() => {
+                          passwordRef.current?.focus();
+                        });
+                      }}
                     />
                   </View>
                 </View>
@@ -619,8 +621,6 @@ export default function AdminLogin() {
                   <View
                     style={[
                       styles.inputContainer,
-                      focusedField === "password" &&
-                        styles.inputContainerFocused,
                       error &&
                         !formData.password &&
                         styles.inputContainerError,
@@ -629,11 +629,7 @@ export default function AdminLogin() {
                     <Ionicons
                       name="lock-closed-outline"
                       size={22}
-                      color={
-                        focusedField === "password"
-                          ? "#7C3AED"
-                          : "#94A3B8"
-                      }
+                      color="#94A3B8"
                     />
 
                     <TextInput
@@ -643,23 +639,26 @@ export default function AdminLogin() {
                         styles.passwordInput,
                       ]}
                       value={formData.password}
-                      onChangeText={(value) =>
-                        updateField("password", value)
-                      }
+                      onChangeText={(value) => updateField("password", value)}
                       placeholder="Enter your admin password"
                       placeholderTextColor="#94A3B8"
                       secureTextEntry={!showPassword}
                       autoCapitalize="none"
                       autoCorrect={false}
-                      autoComplete="password"
+                      spellCheck={false}
+                      autoComplete="off"
+                      textContentType="none"
                       editable={!loading}
                       returnKeyType="done"
-                      onFocus={() =>
-                        setFocusedField("password")
-                      }
-                      onBlur={() =>
-                        setFocusedField("")
-                      }
+                      blurOnSubmit={false}
+                      onFocus={() => {
+                        focusedInputRef.current = "password";
+                      }}
+                      onBlur={() => {
+                        if (focusedInputRef.current === "password") {
+                          focusedInputRef.current = null;
+                        }
+                      }}
                       onSubmitEditing={handleSubmit}
                     />
 
@@ -1344,15 +1343,21 @@ const styles = StyleSheet.create({
     minWidth: 0,
     height: 56,
     marginLeft: 12,
-    paddingVertical: 0,
+    paddingTop: 0,
+    paddingBottom: 0,
+    paddingLeft: 0,
+    paddingRight: 0,
     color: "#0F172A",
     fontSize: 14,
     fontWeight: "600",
     outlineStyle: "none",
+    backgroundColor: "transparent",
+    includeFontPadding: false,
   },
 
   passwordInput: {
     paddingRight: 4,
+    flexShrink: 1,
   },
 
   eyeButton: {

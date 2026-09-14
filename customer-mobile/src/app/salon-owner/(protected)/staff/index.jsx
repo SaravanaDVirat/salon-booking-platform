@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   Image,
   KeyboardAvoidingView,
@@ -22,7 +21,7 @@ import { FontAwesome5, Ionicons, MaterialCommunityIcons } from "@expo/vector-ico
 import * as ImagePicker from "expo-image-picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const API_URL = "http://localhost:1812/api";
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 const DAYS = [
   "MONDAY",
@@ -205,6 +204,34 @@ const formatDate = (date) => {
     month: "short",
     year: "numeric",
   });
+};
+
+const pad2 = (value) => String(value).padStart(2, "0");
+
+const toDateInputValue = (date) => {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "";
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+};
+
+const parseDateInput = (value) => {
+  if (!value || typeof value !== "string") return null;
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return null;
+
+  const year = Number(match[1]);
+  const month = Number(match[2]) - 1;
+  const day = Number(match[3]);
+  const date = new Date(year, month, day);
+
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return date;
 };
 
 const getInitials = (name) => {
@@ -1238,6 +1265,52 @@ const LeaveModal = ({
   const { width } = useWindowDimensions();
   const mobile = width < 600;
 
+  const today = new Date();
+  const initialMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  const [calendarTarget, setCalendarTarget] = useState(null);
+  const [calendarMonth, setCalendarMonth] = useState(initialMonth);
+
+  const openCalendar = (target) => {
+    const currentValue = form[target];
+    if (currentValue) {
+      const parsed = parseDateInput(currentValue);
+      if (parsed) {
+        setCalendarMonth(new Date(parsed.getFullYear(), parsed.getMonth(), 1));
+      } else {
+        setCalendarMonth(new Date(today.getFullYear(), today.getMonth(), 1));
+      }
+    } else {
+      setCalendarMonth(new Date(today.getFullYear(), today.getMonth(), 1));
+    }
+    setCalendarTarget(target);
+  };
+
+  const selectCalendarDate = (date) => {
+    const value = toDateInputValue(date);
+    setForm((prev) => ({ ...prev, [calendarTarget]: value }));
+    setCalendarTarget(null);
+  };
+
+  const calendarDays = useMemo(() => {
+    const year = calendarMonth.getFullYear();
+    const month = calendarMonth.getMonth();
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const cells = [];
+
+    // Sunday-first calendar. Empty leading cells keep dates aligned.
+    for (let i = 0; i < firstDay; i += 1) cells.push(null);
+    for (let day = 1; day <= daysInMonth; day += 1) {
+      cells.push(new Date(year, month, day));
+    }
+    return cells;
+  }, [calendarMonth]);
+
+  const monthLabel = calendarMonth.toLocaleDateString("en-IN", {
+    month: "long",
+    year: "numeric",
+  });
+
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <SafeAreaView style={styles.formBackdrop}>
@@ -1288,15 +1361,27 @@ const LeaveModal = ({
                   <FieldLabel required>Start date</FieldLabel>
                   <View style={styles.inputWrap}>
                     <FontAwesome5 name="calendar-day" size={12} color={COLORS.faint} />
-                    <TextInput
-                      value={form.startDate}
-                      onChangeText={(value) => setForm((prev) => ({ ...prev, startDate: value }))}
-                      placeholder="YYYY-MM-DD"
-                      placeholderTextColor={COLORS.faint}
-                      style={styles.input}
-                      keyboardType="numbers-and-punctuation"
-                      maxLength={10}
-                    />
+                    <Pressable
+                      onPress={() => openCalendar("startDate")}
+                      style={({ pressed }) => [
+                        styles.inputWrapPressable,
+                        pressed && styles.selectPressed,
+                      ]}
+                      accessibilityRole="button"
+                      accessibilityLabel="Choose start date"
+                    >
+                      <FontAwesome5 name="calendar-day" size={12} color={form.startDate ? COLORS.primary : COLORS.faint} />
+                      <Text
+                        style={[
+                          styles.dateValueText,
+                          !form.startDate && styles.datePlaceholderText,
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {form.startDate || "Choose date"}
+                      </Text>
+                      <Ionicons name="chevron-down" size={14} color={COLORS.faint} />
+                    </Pressable>
                   </View>
                 </View>
 
@@ -1304,15 +1389,27 @@ const LeaveModal = ({
                   <FieldLabel required>End date</FieldLabel>
                   <View style={styles.inputWrap}>
                     <FontAwesome5 name="calendar-check" size={12} color={COLORS.faint} />
-                    <TextInput
-                      value={form.endDate}
-                      onChangeText={(value) => setForm((prev) => ({ ...prev, endDate: value }))}
-                      placeholder="YYYY-MM-DD"
-                      placeholderTextColor={COLORS.faint}
-                      style={styles.input}
-                      keyboardType="numbers-and-punctuation"
-                      maxLength={10}
-                    />
+                    <Pressable
+                      onPress={() => openCalendar("endDate")}
+                      style={({ pressed }) => [
+                        styles.inputWrapPressable,
+                        pressed && styles.selectPressed,
+                      ]}
+                      accessibilityRole="button"
+                      accessibilityLabel="Choose end date"
+                    >
+                      <FontAwesome5 name="calendar-check" size={12} color={form.endDate ? COLORS.primary : COLORS.faint} />
+                      <Text
+                        style={[
+                          styles.dateValueText,
+                          !form.endDate && styles.datePlaceholderText,
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {form.endDate || "Choose date"}
+                      </Text>
+                      <Ionicons name="chevron-down" size={14} color={COLORS.faint} />
+                    </Pressable>
                   </View>
                 </View>
               </View>
@@ -1350,6 +1447,196 @@ const LeaveModal = ({
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
+
+      {calendarTarget && (
+        <Modal
+          visible
+          transparent
+          animationType="fade"
+          onRequestClose={() => setCalendarTarget(null)}
+        >
+          <View style={styles.calendarBackdrop}>
+            <Pressable
+              style={StyleSheet.absoluteFill}
+              onPress={() => setCalendarTarget(null)}
+            />
+            <View style={[styles.calendarModal, mobile && styles.calendarModalMobile]}>
+              <View style={styles.calendarHeader}>
+                <View style={styles.calendarHeaderIcon}>
+                  <FontAwesome5 name="calendar-alt" size={15} color="#fff" />
+                </View>
+                <View style={styles.flex1}>
+                  <Text style={styles.calendarTitle}>
+                    {calendarTarget === "startDate" ? "Start date" : "End date"}
+                  </Text>
+                  <Text style={styles.calendarSubtitle}>{monthLabel}</Text>
+                </View>
+                <Pressable
+                  onPress={() => setCalendarTarget(null)}
+                  style={styles.closeIconButton}
+                  hitSlop={8}
+                >
+                  <Ionicons name="close" size={20} color={COLORS.muted} />
+                </Pressable>
+              </View>
+
+              <View style={styles.calendarMonthBar}>
+                <Pressable
+                  onPress={() =>
+                    setCalendarMonth(
+                      (prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1)
+                    )
+                  }
+                  style={styles.calendarNavButton}
+                  hitSlop={6}
+                >
+                  <Ionicons name="chevron-back" size={18} color={COLORS.ink} />
+                </Pressable>
+
+                <Text style={styles.calendarMonthText}>{monthLabel}</Text>
+
+                <Pressable
+                  onPress={() =>
+                    setCalendarMonth(
+                      (prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1)
+                    )
+                  }
+                  style={styles.calendarNavButton}
+                  hitSlop={6}
+                >
+                  <Ionicons name="chevron-forward" size={18} color={COLORS.ink} />
+                </Pressable>
+              </View>
+
+              <View style={styles.calendarWeekRow}>
+                {["S", "M", "T", "W", "T", "F", "S"].map((day, index) => (
+                  <View key={`${day}-${index}`} style={styles.calendarWeekCell}>
+                    <Text style={styles.calendarWeekText}>{day}</Text>
+                  </View>
+                ))}
+              </View>
+
+              <View style={styles.calendarGrid}>
+                {calendarDays.map((date, index) => {
+                  if (!date) {
+                    return <View key={`empty-${index}`} style={styles.calendarDayCell} />;
+                  }
+
+                  const value = toDateInputValue(date);
+                  const selected = value === form[calendarTarget];
+                  const isToday = value === toDateInputValue(today);
+                  const isBeforeToday =
+                    date < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+                  return (
+                    <Pressable
+                      key={value}
+                      onPress={() => selectCalendarDate(date)}
+                      style={({ pressed }) => [
+                        styles.calendarDayCell,
+                        styles.calendarDayButton,
+                        selected && styles.calendarDaySelected,
+                        pressed && styles.calendarDayPressed,
+                      ]}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Select ${value}`}
+                    >
+                      <Text
+                        style={[
+                          styles.calendarDayText,
+                          selected && styles.calendarDaySelectedText,
+                          isToday && !selected && styles.calendarTodayText,
+                          isBeforeToday && !selected && styles.calendarPastText,
+                        ]}
+                      >
+                        {date.getDate()}
+                      </Text>
+                      {isToday && (
+                        <View
+                          style={[
+                            styles.calendarTodayDot,
+                            selected && styles.calendarTodayDotSelected,
+                          ]}
+                        />
+                      )}
+                    </Pressable>
+                  );
+                })}
+              </View>
+
+              <View style={styles.calendarFooter}>
+                <View style={styles.calendarLegend}>
+                  <View style={styles.calendarLegendDot} />
+                  <Text style={styles.calendarLegendText}>Today</Text>
+                </View>
+                <Pressable
+                  onPress={() => selectCalendarDate(today)}
+                  style={styles.calendarTodayButton}
+                >
+                  <Text style={styles.calendarTodayButtonText}>Today</Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
+    </Modal>
+  );
+};
+
+const ConfirmModal = ({
+  visible,
+  title,
+  message,
+  confirmText,
+  destructive,
+  loading,
+  onCancel,
+  onConfirm,
+}) => {
+  if (!visible) return null;
+
+  return (
+    <Modal visible transparent animationType="fade" onRequestClose={onCancel}>
+      <View style={styles.confirmBackdrop}>
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={loading ? undefined : onCancel}
+        />
+        <View style={styles.confirmModal}>
+          <View style={[styles.confirmIcon, destructive ? styles.confirmIconDanger : styles.confirmIconPrimary]}>
+            <FontAwesome5
+              name={destructive ? "exclamation-triangle" : "check"}
+              size={17}
+              color={destructive ? COLORS.danger : COLORS.primary}
+            />
+          </View>
+
+          <Text style={styles.confirmTitle} numberOfLines={3}>
+            {title}
+          </Text>
+          <Text style={styles.confirmMessage} numberOfLines={6}>
+            {message}
+          </Text>
+
+          <View style={styles.confirmButtons}>
+            <PremiumButton
+              title="Cancel"
+              variant="outline"
+              onPress={onCancel}
+              disabled={loading}
+              style={styles.confirmCancelButton}
+            />
+            <PremiumButton
+              title={confirmText}
+              variant={destructive ? "danger" : "primary"}
+              onPress={onConfirm}
+              loading={loading}
+              style={styles.confirmActionButton}
+            />
+          </View>
+        </View>
+      </View>
     </Modal>
   );
 };
@@ -1396,6 +1683,18 @@ export default function StaffsManagement() {
     show: false,
     type: "success",
     message: "",
+  });
+
+  // Cross-platform confirmation state.
+  // React Native Alert buttons are unreliable on some Expo Web/browser setups,
+  // so status/delete/leave-removal confirmations use a real Modal instead.
+  const [confirmState, setConfirmState] = useState({
+    visible: false,
+    title: "",
+    message: "",
+    confirmText: "Confirm",
+    destructive: false,
+    onConfirm: null,
   });
 
   const showToast = useCallback((message, type = "success") => {
@@ -1612,9 +1911,9 @@ export default function StaffsManagement() {
     try {
       const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permission.granted) {
-        Alert.alert(
-          "Photo permission needed",
-          "Please allow photo library access to choose a staff profile image."
+        showToast(
+          "Please allow photo library access to choose a staff profile image.",
+          "error"
         );
         return;
       }
@@ -1833,75 +2132,70 @@ export default function StaffsManagement() {
     const action = item.isActive !== false ? "deactivate" : "activate";
     const verb = action === "deactivate" ? "Deactivate" : "Activate";
 
-    Alert.alert(
-      `${verb} staff?`,
-      `${action === "deactivate" ? "Deactivate" : "Activate"} "${item.name}"?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: verb,
-          style: action === "deactivate" ? "destructive" : "default",
-          onPress: async () => {
-            try {
-              setSaving(true);
-              const response = await fetch(`${API_URL}/staff/${item._id}/${action}`, {
-                method: "PATCH",
-                headers: { ...(await authHeaders()) },
-              });
-              const data = await safeJson(response);
+    setConfirmState({
+      visible: true,
+      title: `${verb} staff?`,
+      message: `${action === "deactivate" ? "Deactivate" : "Activate"} "${item.name}"?`,
+      confirmText: verb,
+      destructive: action === "deactivate",
+      onConfirm: async () => {
+        try {
+          setSaving(true);
+          const response = await fetch(`${API_URL}/staff/${item._id}/${action}`, {
+            method: "PATCH",
+            headers: { ...(await authHeaders()) },
+          });
+          const data = await safeJson(response);
 
-              if (!response.ok) {
-                throw new Error(data.message || `Failed to ${action} staff`);
-              }
+          if (!response.ok) {
+            throw new Error(data.message || `Failed to ${action} staff`);
+          }
 
-              showToast(data.message || `Staff ${action}d successfully`);
-              await loadStaff();
-            } catch (error) {
-              console.error(`${action} staff error:`, error);
-              showToast(error.message || `Failed to ${action} staff`, "error");
-            } finally {
-              setSaving(false);
-            }
-          },
-        },
-      ]
-    );
+          showToast(data.message || `Staff ${action}d successfully`);
+          setConfirmState((prev) => ({ ...prev, visible: false }));
+          await loadStaff();
+        } catch (error) {
+          console.error(`${action} staff error:`, error);
+          showToast(error.message || `Failed to ${action} staff`, "error");
+        } finally {
+          setSaving(false);
+        }
+      },
+    });
   };
 
   const deleteStaff = (item) => {
-    Alert.alert(
-      "Delete staff permanently?",
-      `"${item.name}" will be removed. This action cannot be undone.`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              setSaving(true);
-              const response = await fetch(`${API_URL}/staff/${item._id}`, {
-                method: "DELETE",
-                headers: { ...(await authHeaders()) },
-              });
-              const data = await safeJson(response);
+    setConfirmState({
+      visible: true,
+      title: "Delete staff permanently?",
+      message: `"${item.name}" will be removed. This action cannot be undone.`,
+      confirmText: "Delete",
+      destructive: true,
+      onConfirm: async () => {
+        try {
+          setSaving(true);
+          const response = await fetch(`${API_URL}/staff/${item._id}`, {
+            method: "DELETE",
+            headers: { ...(await authHeaders()) },
+          });
+          const data = await safeJson(response);
 
-              if (!response.ok) {
-                throw new Error(data.message || "Failed to delete staff");
-              }
+          if (!response.ok) {
+            throw new Error(data.message || "Failed to delete staff");
+          }
 
-              showToast(data.message || "Staff deleted successfully");
-              await loadStaff();
-            } catch (error) {
-              console.error("Delete staff error:", error);
-              showToast(error.message || "Failed to delete staff", "error");
-            } finally {
-              setSaving(false);
-            }
-          },
-        },
-      ]
-    );
+          showToast(data.message || "Staff deleted successfully");
+          setConfirmState((prev) => ({ ...prev, visible: false }));
+          if (expandedStaff === item._id) setExpandedStaff(null);
+          await loadStaff();
+        } catch (error) {
+          console.error("Delete staff error:", error);
+          showToast(error.message || "Failed to delete staff", "error");
+        } finally {
+          setSaving(false);
+        }
+      },
+    });
   };
 
   const openLeaveModal = (item) => {
@@ -1963,42 +2257,39 @@ export default function StaffsManagement() {
   };
 
   const removeLeave = (item, leaveIndex) => {
-    Alert.alert(
-      "Remove this leave?",
-      `Remove leave record ${leaveIndex + 1} for ${item.name}?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Remove",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              setSaving(true);
-              const response = await fetch(
-                `${API_URL}/staff/${item._id}/leaves/${leaveIndex}`,
-                {
-                  method: "DELETE",
-                  headers: { ...(await authHeaders()) },
-                }
-              );
-              const data = await safeJson(response);
-
-              if (!response.ok) {
-                throw new Error(data.message || "Failed to remove leave");
-              }
-
-              showToast(data.message || "Leave removed successfully");
-              await loadStaff();
-            } catch (error) {
-              console.error("Remove leave error:", error);
-              showToast(error.message || "Failed to remove leave", "error");
-            } finally {
-              setSaving(false);
+    setConfirmState({
+      visible: true,
+      title: "Remove this leave?",
+      message: `Remove leave record ${leaveIndex + 1} for ${item.name}?`,
+      confirmText: "Remove",
+      destructive: true,
+      onConfirm: async () => {
+        try {
+          setSaving(true);
+          const response = await fetch(
+            `${API_URL}/staff/${item._id}/leaves/${leaveIndex}`,
+            {
+              method: "DELETE",
+              headers: { ...(await authHeaders()) },
             }
-          },
-        },
-      ]
-    );
+          );
+          const data = await safeJson(response);
+
+          if (!response.ok) {
+            throw new Error(data.message || "Failed to remove leave");
+          }
+
+          showToast(data.message || "Leave removed successfully");
+          setConfirmState((prev) => ({ ...prev, visible: false }));
+          await loadStaff();
+        } catch (error) {
+          console.error("Remove leave error:", error);
+          showToast(error.message || "Failed to remove leave", "error");
+        } finally {
+          setSaving(false);
+        }
+      },
+    });
   };
 
   const refresh = async () => {
@@ -2333,6 +2624,21 @@ export default function StaffsManagement() {
             }
           }}
           onSubmit={submitLeave}
+        />
+
+        <ConfirmModal
+          visible={confirmState.visible}
+          title={confirmState.title}
+          message={confirmState.message}
+          confirmText={confirmState.confirmText}
+          destructive={confirmState.destructive}
+          loading={saving}
+          onCancel={() => {
+            if (!saving) {
+              setConfirmState((prev) => ({ ...prev, visible: false }));
+            }
+          }}
+          onConfirm={confirmState.onConfirm}
         />
       </View>
     </SafeAreaView>
@@ -4709,4 +5015,315 @@ footerSave: {
   profileEditorCompact: {
     alignItems: "flex-start",
   },
+  inputWrapPressable: {
+    minHeight: 44,
+    paddingHorizontal: 11,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.surface,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    width: "100%",
+  },
+
+  dateValueText: {
+    flex: 1,
+    minWidth: 0,
+    color: COLORS.ink,
+    fontSize: 12,
+    fontWeight: "800",
+  },
+
+  datePlaceholderText: {
+    color: COLORS.faint,
+    fontWeight: "600",
+  },
+
+  calendarBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(15, 23, 42, 0.58)",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 16,
+  },
+
+  calendarModal: {
+    width: "100%",
+    maxWidth: 410,
+    borderRadius: 24,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    overflow: "hidden",
+    shadowColor: COLORS.shadow,
+    shadowOpacity: 0.25,
+    shadowRadius: 28,
+    shadowOffset: { width: 0, height: 12 },
+    elevation: 18,
+  },
+
+  calendarModalMobile: {
+    maxWidth: 390,
+  },
+
+  calendarHeader: {
+    minWidth: 0,
+    padding: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+
+  calendarHeaderIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: COLORS.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  calendarTitle: {
+    color: COLORS.ink,
+    fontSize: 15,
+    fontWeight: "900",
+  },
+
+  calendarSubtitle: {
+    marginTop: 2,
+    color: COLORS.faint,
+    fontSize: 10,
+    fontWeight: "700",
+  },
+
+  calendarMonthBar: {
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  calendarNavButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: COLORS.surfaceSoft,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  calendarMonthText: {
+    color: COLORS.ink,
+    fontSize: 14,
+    fontWeight: "900",
+    textAlign: "center",
+  },
+
+  calendarWeekRow: {
+    paddingHorizontal: 12,
+    flexDirection: "row",
+  },
+
+  calendarWeekCell: {
+    width: "14.2857%",
+    height: 30,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  calendarWeekText: {
+    color: COLORS.faint,
+    fontSize: 10,
+    fontWeight: "900",
+  },
+
+  calendarGrid: {
+    paddingHorizontal: 12,
+    paddingBottom: 10,
+    flexDirection: "row",
+    flexWrap: "wrap",
+  },
+
+  calendarDayCell: {
+    width: "14.2857%",
+    height: 46,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  calendarDayButton: {
+    borderRadius: 13,
+  },
+
+  calendarDayPressed: {
+    backgroundColor: COLORS.primarySoft,
+  },
+
+  calendarDaySelected: {
+    backgroundColor: COLORS.primary,
+  },
+
+  calendarDayText: {
+    color: COLORS.ink,
+    fontSize: 12,
+    fontWeight: "800",
+  },
+
+  calendarDaySelectedText: {
+    color: "#fff",
+    fontWeight: "900",
+  },
+
+  calendarTodayText: {
+    color: COLORS.primary,
+    fontWeight: "900",
+  },
+
+  calendarPastText: {
+    color: "#B8BFCC",
+  },
+
+  calendarTodayDot: {
+    position: "absolute",
+    bottom: 6,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: COLORS.primary,
+  },
+
+  calendarTodayDotSelected: {
+    backgroundColor: "#fff",
+  },
+
+  calendarFooter: {
+    minHeight: 56,
+    paddingHorizontal: 15,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+
+  calendarLegend: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+  },
+
+  calendarLegendDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: COLORS.primary,
+  },
+
+  calendarLegendText: {
+    color: COLORS.muted,
+    fontSize: 10,
+    fontWeight: "700",
+  },
+
+  calendarTodayButton: {
+    minHeight: 34,
+    paddingHorizontal: 13,
+    borderRadius: 10,
+    backgroundColor: COLORS.primarySoft,
+    borderWidth: 1,
+    borderColor: "#D9D6FE",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  calendarTodayButtonText: {
+    color: COLORS.primary,
+    fontSize: 10,
+    fontWeight: "900",
+  },
+
+  confirmBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(15, 23, 42, 0.58)",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 18,
+  },
+
+  confirmModal: {
+    width: "100%",
+    maxWidth: 430,
+    borderRadius: 24,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: 20,
+    shadowColor: COLORS.shadow,
+    shadowOpacity: 0.25,
+    shadowRadius: 30,
+    shadowOffset: { width: 0, height: 14 },
+    elevation: 20,
+  },
+
+  confirmIcon: {
+    width: 46,
+    height: 46,
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 13,
+  },
+
+  confirmIconDanger: {
+    backgroundColor: COLORS.dangerSoft,
+    borderWidth: 1,
+    borderColor: "#FEE4E2",
+  },
+
+  confirmIconPrimary: {
+    backgroundColor: COLORS.primarySoft,
+    borderWidth: 1,
+    borderColor: "#D9D6FE",
+  },
+
+  confirmTitle: {
+    color: COLORS.ink,
+    fontSize: 17,
+    lineHeight: 23,
+    fontWeight: "900",
+  },
+
+  confirmMessage: {
+    marginTop: 7,
+    color: COLORS.muted,
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: "600",
+  },
+
+  confirmButtons: {
+    marginTop: 18,
+    width: "100%",
+    flexDirection: "row",
+    gap: 9,
+  },
+
+  confirmCancelButton: {
+    flex: 1,
+    minWidth: 0,
+  },
+
+  confirmActionButton: {
+    flex: 1,
+    minWidth: 0,
+  },
+
 });

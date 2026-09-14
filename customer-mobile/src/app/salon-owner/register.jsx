@@ -351,7 +351,7 @@ const SalonOwnerRegister = () => {
           behavior={
             Platform.OS === "ios"
               ? "padding"
-              : "height"
+              : undefined
           }
           keyboardVerticalOffset={
             Platform.OS === "ios" ? 12 : 0
@@ -371,8 +371,12 @@ const SalonOwnerRegister = () => {
               },
             ]}
             showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            automaticallyAdjustKeyboardInsets
+            keyboardShouldPersistTaps="always"
+            keyboardDismissMode="none"
+            removeClippedSubviews={false}
+            {...(Platform.OS === "android"
+              ? { nestedScrollEnabled: true }
+              : {})}
           >
             {/* =================================================
                 MAIN CARD
@@ -1065,7 +1069,7 @@ const SalonOwnerRegister = () => {
                           autoCapitalize="words"
                           autoCorrect={false}
                           returnKeyType="next"
-                          textContentType="name"
+                           autoComplete="name"
                           selectionColor={
                             COLORS.rose
                           }
@@ -1139,7 +1143,7 @@ const SalonOwnerRegister = () => {
                           autoCapitalize="none"
                           autoCorrect={false}
                           returnKeyType="next"
-                          textContentType="emailAddress"
+                           autoComplete="email"
                           selectionColor={
                             COLORS.rose
                           }
@@ -1212,7 +1216,7 @@ const SalonOwnerRegister = () => {
                           keyboardType="phone-pad"
                           autoCorrect={false}
                           returnKeyType="next"
-                          textContentType="telephoneNumber"
+                           autoComplete="tel"
                           selectionColor={
                             COLORS.rose
                           }
@@ -1291,7 +1295,7 @@ const SalonOwnerRegister = () => {
                           autoCapitalize="none"
                           autoCorrect={false}
                           returnKeyType="next"
-                          textContentType="newPassword"
+                           autoComplete="new-password"
                           selectionColor={
                             COLORS.rose
                           }
@@ -1417,7 +1421,7 @@ const SalonOwnerRegister = () => {
                           onSubmitEditing={
                             handleSubmit
                           }
-                          textContentType="newPassword"
+                           autoComplete="new-password"
                           selectionColor={
                             COLORS.rose
                           }

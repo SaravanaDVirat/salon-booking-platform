@@ -187,6 +187,9 @@ const CustomerAppointmentDetails = () => {
 
   const isSmallMobile = width < 360;
 
+  // True mobile breakpoint: fixes both 375px and 425px layouts.
+  const isMobile = width < 768;
+
   const isMediumMobile =
     width >= 360 && width < 430;
 
@@ -792,6 +795,8 @@ const CustomerAppointmentDetails = () => {
                 <View
                   style={[
                     styles.heroContent,
+                    isMobile &&
+                      styles.heroContentMobile,
                     isSmallMobile &&
                       styles.heroContentSmall,
                     isTablet &&
@@ -807,6 +812,8 @@ const CustomerAppointmentDetails = () => {
                   <View
                     style={[
                       styles.serviceHeroBlock,
+                      isMobile &&
+                        styles.serviceHeroBlockMobile,
                       isDesktop &&
                         styles.serviceHeroBlockDesktop,
                     ]}
@@ -832,6 +839,8 @@ const CustomerAppointmentDetails = () => {
                     <View
                       style={[
                         styles.serviceHeroText,
+                        isMobile &&
+                          styles.serviceHeroTextMobile,
                         isSmallMobile &&
                           styles.serviceHeroTextSmall,
                       ]}
@@ -849,6 +858,8 @@ const CustomerAppointmentDetails = () => {
                       <Text
                         style={[
                           styles.heroServiceName,
+                          isMobile &&
+                            styles.heroServiceNameMobile,
                           isSmallMobile &&
                             styles.heroServiceNameSmall,
                           isTablet &&
@@ -900,6 +911,10 @@ const CustomerAppointmentDetails = () => {
                   <View
                     style={[
                       styles.heroStatusWrap,
+                      isMobile &&
+                        styles.heroStatusWrapMobile,
+                      isSmallMobile &&
+                        styles.heroStatusWrapSmallMobile,
                       isDesktop &&
                         styles.heroStatusWrapDesktop,
                     ]}
@@ -907,6 +922,8 @@ const CustomerAppointmentDetails = () => {
                     <View
                       style={[
                         styles.heroStatus,
+                        isMobile &&
+                          styles.heroStatusMobile,
                         isSmallMobile &&
                           styles.heroStatusSmall,
                       ]}
@@ -916,9 +933,11 @@ const CustomerAppointmentDetails = () => {
                           statusConfig.icon
                         }
                         size={
-                          isSmallMobile
-                            ? 15
-                            : 17
+                          isMobile
+                            ? 12
+                            : isSmallMobile
+                              ? 15
+                              : 17
                         }
                         color={COLORS.white}
                       />
@@ -926,6 +945,8 @@ const CustomerAppointmentDetails = () => {
                       <Text
                         style={[
                           styles.heroStatusText,
+                          isMobile &&
+                            styles.heroStatusTextMobile,
                           isSmallMobile &&
                             styles.heroStatusTextSmall,
                         ]}
@@ -951,6 +972,8 @@ const CustomerAppointmentDetails = () => {
                 <View
                   style={[
                     styles.quickInfoGrid,
+                    isMobile &&
+                      styles.quickInfoGridMobile,
                     isTablet &&
                       styles.quickInfoGridTablet,
                     isDesktop &&
@@ -966,6 +989,7 @@ const CustomerAppointmentDetails = () => {
                       appointment.appointmentDate
                     )}
                     small={isSmallMobile}
+                    mobile={isMobile}
                   />
 
                   {/* TIME */}
@@ -983,6 +1007,7 @@ const CustomerAppointmentDetails = () => {
                         : "—"
                     }
                     small={isSmallMobile}
+                    mobile={isMobile}
                   />
 
                   {/* STYLIST */}
@@ -995,6 +1020,7 @@ const CustomerAppointmentDetails = () => {
                         ?.name || "—"
                     }
                     small={isSmallMobile}
+                    mobile={isMobile}
                   />
 
                   {/* LOCATION */}
@@ -1007,6 +1033,7 @@ const CustomerAppointmentDetails = () => {
                         ?.city || "Salon"
                     }
                     small={isSmallMobile}
+                    mobile={isMobile}
                   />
                 </View>
               </View>
@@ -1059,7 +1086,7 @@ const CustomerAppointmentDetails = () => {
                     </Text>
                   </View>
 
-                  {!isSmallMobile ? (
+                  {!isMobile ? (
                     <View
                       style={
                         styles.headingLine
@@ -1073,6 +1100,8 @@ const CustomerAppointmentDetails = () => {
                 <View
                   style={[
                     styles.bookingGrid,
+                    isMobile &&
+                      styles.bookingGridMobile,
                     isTablet &&
                       styles.bookingGridTablet,
                     isDesktop &&
@@ -1090,6 +1119,7 @@ const CustomerAppointmentDetails = () => {
                     )}
                     accent="violet"
                     small={isSmallMobile}
+                    mobile={isMobile}
                   />
 
                   {/* DURATION */}
@@ -1105,6 +1135,7 @@ const CustomerAppointmentDetails = () => {
                     }
                     accent="fuchsia"
                     small={isSmallMobile}
+                    mobile={isMobile}
                   />
 
                   {/* ADDRESS */}
@@ -1112,6 +1143,8 @@ const CustomerAppointmentDetails = () => {
                   <View
                     style={[
                       styles.detailPanel,
+                      isMobile &&
+                        styles.detailPanelMobile,
                       isSmallMobile &&
                         styles.detailPanelSmall,
                     ]}
@@ -1170,6 +1203,8 @@ const CustomerAppointmentDetails = () => {
                   <View
                     style={[
                       styles.detailPanel,
+                      isMobile &&
+                        styles.detailPanelMobile,
                       isSmallMobile &&
                         styles.detailPanelSmall,
                     ]}
@@ -1298,6 +1333,8 @@ const CustomerAppointmentDetails = () => {
                 <View
                   style={[
                     styles.actionsContainer,
+                    isMobile &&
+                      styles.actionsContainerMobile,
                     isSmallMobile &&
                       styles.actionsContainerSmall,
                   ]}
@@ -1308,6 +1345,8 @@ const CustomerAppointmentDetails = () => {
                     }
                     style={({ pressed }) => [
                       styles.backAction,
+                      isMobile &&
+                        styles.backActionMobile,
                       isSmallMobile &&
                         styles.backActionSmall,
                       pressed &&
@@ -1347,6 +1386,8 @@ const CustomerAppointmentDetails = () => {
                         pressed,
                       }) => [
                         styles.cancelAction,
+                        isMobile &&
+                          styles.cancelActionMobile,
                         isSmallMobile &&
                           styles.cancelActionSmall,
                         pressed &&
@@ -1622,6 +1663,8 @@ const CustomerAppointmentDetails = () => {
               <View
                 style={[
                   styles.modalActions,
+                  isMobile &&
+                    styles.modalActionsMobile,
                   isSmallMobile &&
                     styles.modalActionsSmall,
                 ]}
@@ -1716,11 +1759,13 @@ const InfoCard = ({
   title,
   value,
   small = false,
+  mobile = false,
 }) => {
   return (
     <View
       style={[
         styles.infoCard,
+        mobile && styles.infoCardMobile,
         small && styles.infoCardSmall,
       ]}
     >
@@ -1772,6 +1817,7 @@ const BookingInfoCard = ({
   value,
   accent = "violet",
   small = false,
+  mobile = false,
 }) => {
   const isFuchsia = accent === "fuchsia";
 
@@ -1779,6 +1825,8 @@ const BookingInfoCard = ({
     <View
       style={[
         styles.bookingInfoCard,
+        mobile &&
+          styles.bookingInfoCardMobile,
         small &&
           styles.bookingInfoCardSmall,
       ]}
@@ -2538,6 +2586,17 @@ const styles = StyleSheet.create({
     gap: 18,
   },
 
+  heroContentMobile: {
+    minHeight: 205,
+    paddingHorizontal: 20,
+    paddingTop: 25,
+    paddingBottom: 58,
+    flexDirection: "column",
+    alignItems: "stretch",
+    justifyContent: "flex-start",
+    gap: 0,
+  },
+
   heroContentTablet: {
     paddingHorizontal: 32,
     paddingVertical: 34,
@@ -2561,6 +2620,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 16,
+  },
+
+  serviceHeroBlockMobile: {
+    flex: 0,
+    width: "100%",
+    minWidth: 0,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 11,
+    alignSelf: "stretch",
+    paddingBottom: 48,
   },
 
   serviceHeroBlockDesktop: {
@@ -2605,6 +2675,13 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
 
+  serviceHeroTextMobile: {
+    flex: 1,
+    minWidth: 0,
+    maxWidth: "100%",
+    alignSelf: "stretch",
+  },
+
   heroEyebrow: {
     color: "rgba(255,255,255,0.61)",
     fontSize: 10,
@@ -2635,6 +2712,18 @@ const styles = StyleSheet.create({
     fontSize: 19,
     lineHeight: 24,
     letterSpacing: -0.2,
+  },
+
+  heroServiceNameMobile: {
+    marginTop: 5,
+    fontSize: 22,
+    lineHeight: 28,
+    letterSpacing: -0.3,
+    flexShrink: 1,
+    width: "100%",
+    maxWidth: "100%",
+    includeFontPadding: false,
+    textAlign: "left",
   },
 
   heroServiceNameTablet: {
@@ -2679,8 +2768,27 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
   },
 
+  heroStatusWrapMobile: {
+    position: "absolute",
+    left: 81,
+    bottom: 18,
+    width: "auto",
+    flexShrink: 0,
+    flexGrow: 0,
+    alignItems: "flex-start",
+    alignSelf: "auto",
+    marginTop: 0,
+    paddingLeft: 0,
+    zIndex: 20,
+  },
+
   heroStatusWrapDesktop: {
     alignSelf: "center",
+  },
+
+  heroStatusWrapSmallMobile: {
+    left: 67,
+    bottom: 15,
   },
 
   heroStatus: {
@@ -2705,6 +2813,16 @@ const styles = StyleSheet.create({
     gap: 6,
   },
 
+  heroStatusMobile: {
+    alignSelf: "flex-start",
+    minHeight: 28,
+    height: 28,
+    paddingHorizontal: 9,
+    gap: 4,
+    flexShrink: 0,
+    borderRadius: 999,
+  },
+
   heroStatusText: {
     color: COLORS.white,
     fontSize: 10,
@@ -2718,6 +2836,13 @@ const styles = StyleSheet.create({
     fontSize: 8.5,
     lineHeight: 11,
     letterSpacing: 0.8,
+  },
+
+  heroStatusTextMobile: {
+    fontSize: 8,
+    lineHeight: 10,
+    letterSpacing: 0.55,
+    flexShrink: 0,
   },
 
   /* =======================================================
@@ -2740,6 +2865,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
+    gap: 12,
+  },
+
+  quickInfoGridMobile: {
+    flexDirection: "column",
+    flexWrap: "nowrap",
+    justifyContent: "flex-start",
     gap: 12,
   },
 
@@ -2775,6 +2907,13 @@ const styles = StyleSheet.create({
     minHeight: 119,
     padding: 13,
     borderRadius: 18,
+  },
+
+  infoCardMobile: {
+    width: "100%",
+    minHeight: 122,
+    padding: 14,
+    borderRadius: 19,
   },
 
   infoCardIcon: {
@@ -2913,6 +3052,13 @@ const styles = StyleSheet.create({
     gap: 14,
   },
 
+  bookingGridMobile: {
+    flexDirection: "column",
+    flexWrap: "nowrap",
+    justifyContent: "flex-start",
+    gap: 12,
+  },
+
   bookingGridTablet: {
     gap: 16,
   },
@@ -2940,6 +3086,12 @@ const styles = StyleSheet.create({
     width: "100%",
     minHeight: 125,
     borderRadius: 18,
+  },
+
+  bookingInfoCardMobile: {
+    width: "100%",
+    minHeight: 128,
+    borderRadius: 19,
   },
 
   bookingCardGlow: {
@@ -3036,6 +3188,13 @@ const styles = StyleSheet.create({
     minHeight: 125,
     padding: 13,
     borderRadius: 18,
+  },
+
+  detailPanelMobile: {
+    width: "100%",
+    minHeight: 128,
+    padding: 14,
+    borderRadius: 19,
   },
 
   detailPanelHeader: {
@@ -3213,6 +3372,12 @@ const styles = StyleSheet.create({
     alignItems: "stretch",
   },
 
+  actionsContainerMobile: {
+    flexDirection: "column",
+    alignItems: "stretch",
+    gap: 10,
+  },
+
   backAction: {
     minHeight: 50,
     flexDirection: "row",
@@ -3229,6 +3394,11 @@ const styles = StyleSheet.create({
   backActionSmall: {
     width: "100%",
     minHeight: 46,
+  },
+
+  backActionMobile: {
+    width: "100%",
+    minHeight: 48,
   },
 
   backActionText: {
@@ -3265,6 +3435,11 @@ const styles = StyleSheet.create({
   cancelActionSmall: {
     width: "100%",
     minHeight: 46,
+  },
+
+  cancelActionMobile: {
+    width: "100%",
+    minHeight: 48,
   },
 
   cancelActionPressed: {
@@ -3526,6 +3701,12 @@ const styles = StyleSheet.create({
     marginTop: 17,
   },
 
+  modalActionsMobile: {
+    flexDirection: "column",
+    gap: 10,
+    marginTop: 18,
+  },
+
   keepButton: {
     flex: 1,
     minHeight: 49,
@@ -3541,6 +3722,11 @@ const styles = StyleSheet.create({
   keepButtonSmall: {
     width: "100%",
     minHeight: 45,
+  },
+
+  keepButtonMobile: {
+    width: "100%",
+    minHeight: 48,
   },
 
   keepButtonText: {
@@ -3579,6 +3765,11 @@ const styles = StyleSheet.create({
   confirmCancelButtonSmall: {
     width: "100%",
     minHeight: 45,
+  },
+
+  confirmCancelButtonMobile: {
+    width: "100%",
+    minHeight: 48,
   },
 
   confirmCancelPressed: {

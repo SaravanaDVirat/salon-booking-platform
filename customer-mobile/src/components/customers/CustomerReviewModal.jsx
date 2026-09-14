@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -64,11 +65,12 @@ const CustomerReviewModal = ({
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [inputFocused, setInputFocused] = useState(false);
 
   /*
-   * ---------------------------------------------------------
+   * =========================================================
    * RESPONSIVE BREAKPOINTS
-   * ---------------------------------------------------------
+   * =========================================================
    */
 
   const isSmallMobile = width < 360;
@@ -78,31 +80,68 @@ const CustomerReviewModal = ({
   const isDesktop = width >= 1100;
 
   /*
-   * ---------------------------------------------------------
-   * RESPONSIVE VALUES
-   * ---------------------------------------------------------
+   * =========================================================
+   * SAFE MODAL DIMENSIONS
+   * =========================================================
    */
 
-  const modalWidth = isDesktop
-    ? Math.min(width - 80, 680)
-    : isTablet
-      ? Math.min(width - 60, 640)
+  const horizontalScreenMargin = isSmallMobile
+    ? 10
+    : isMediumMobile
+      ? 12
       : isLargeMobile
-        ? Math.min(width - 28, 590)
-        : isMediumMobile
-          ? width - 24
-          : width - 18;
+        ? 14
+        : isTablet
+          ? 30
+          : 40;
 
-  const modalMaxHeight = isDesktop
-    ? Math.min(height - 70, 850)
+  const modalWidth = isDesktop
+    ? Math.min(width - horizontalScreenMargin * 2, 680)
     : isTablet
-      ? Math.min(height - 50, 820)
-      : Math.min(height - 24, 820);
+      ? Math.min(width - horizontalScreenMargin * 2, 640)
+      : Math.min(width - horizontalScreenMargin * 2, 680);
+
+  /*
+   * Android needs a little extra vertical breathing room.
+   * This prevents the card from touching the status/navigation
+   * areas and gives KeyboardAvoidingView room to shrink.
+   */
+
+  const verticalScreenMargin =
+    Platform.OS === "android"
+      ? isSmallMobile
+        ? 10
+        : isMediumMobile
+          ? 12
+          : isLargeMobile
+            ? 14
+            : isTablet
+              ? 20
+              : 28
+      : isSmallMobile
+        ? 14
+        : isMediumMobile
+          ? 16
+          : isLargeMobile
+            ? 18
+            : isTablet
+              ? 24
+              : 35;
+
+  const availableHeight = Math.max(
+    280,
+    height - verticalScreenMargin * 2
+  );
+
+  const modalMaxHeight = Math.min(
+    availableHeight,
+    isDesktop ? 850 : 820
+  );
 
   const horizontalPadding = isSmallMobile
-    ? 14
+    ? 13
     : isMediumMobile
-      ? 17
+      ? 16
       : isLargeMobile
         ? 20
         : isTablet
@@ -110,34 +149,43 @@ const CustomerReviewModal = ({
           : 28;
 
   /*
-   * ---------------------------------------------------------
+   * =========================================================
    * APPOINTMENT DATA
-   * ---------------------------------------------------------
+   * =========================================================
    */
 
   const salon = appointment?.salon || {};
   const service = appointment?.service || {};
   const staff = appointment?.staff || {};
 
+  const appointmentId =
+    appointment?._id || appointment?.id || null;
+
   /*
-   * ---------------------------------------------------------
+   * =========================================================
    * RESET FORM
-   * ---------------------------------------------------------
+   * =========================================================
+   *
+   * Only reset when modal opens or appointment changes.
+   * This is important for Android TextInput focus stability.
    */
 
   useEffect(() => {
-    if (isOpen) {
-      setRating(0);
-      setComment("");
-      setError("");
-      setSubmitting(false);
+    if (!isOpen) {
+      return;
     }
-  }, [isOpen, appointment]);
+
+    setRating(0);
+    setComment("");
+    setError("");
+    setSubmitting(false);
+    setInputFocused(false);
+  }, [isOpen, appointmentId]);
 
   /*
-   * ---------------------------------------------------------
+   * =========================================================
    * RATING TEXT
-   * ---------------------------------------------------------
+   * =========================================================
    */
 
   const ratingText = useMemo(
@@ -152,12 +200,51 @@ const CustomerReviewModal = ({
   );
 
   /*
-   * ---------------------------------------------------------
+   * =========================================================
+   * INPUT FOCUS
+   * =========================================================
+   */
+
+  const handleInputFocus = () => {
+    if (submitting) {
+      return;
+    }
+
+    setInputFocused(true);
+  };
+
+  const handleInputBlur = () => {
+    setInputFocused(false);
+  };
+
+  /*
+   * =========================================================
+   * COMMENT CHANGE
+   * =========================================================
+   */
+
+  const handleCommentChange = (text) => {
+    if (submitting) {
+      return;
+    }
+
+    setComment(text);
+
+    if (error) {
+      setError("");
+    }
+  };
+
+  /*
+   * =========================================================
    * SUBMIT REVIEW
-   * ---------------------------------------------------------
+   * =========================================================
    */
 
   const handleSubmit = async () => {
+    Keyboard.dismiss();
+    setInputFocused(false);
+
     if (!rating) {
       setError("Please select a rating.");
       return;
@@ -167,9 +254,6 @@ const CustomerReviewModal = ({
       setError("Rating must be between 1 and 5.");
       return;
     }
-
-    const appointmentId =
-      appointment?._id || appointment?.id;
 
     if (!appointmentId) {
       setError("Appointment information is missing.");
@@ -205,20 +289,26 @@ const CustomerReviewModal = ({
   };
 
   /*
-   * ---------------------------------------------------------
+   * =========================================================
    * CLOSE
-   * ---------------------------------------------------------
+   * =========================================================
    */
 
   const handleClose = () => {
-    if (submitting) return;
+    if (submitting) {
+      return;
+    }
+
+    Keyboard.dismiss();
+    setInputFocused(false);
+
     onClose();
   };
 
   /*
-   * ---------------------------------------------------------
+   * =========================================================
    * DON'T RENDER
-   * ---------------------------------------------------------
+   * =========================================================
    */
 
   if (!isOpen || !appointment) {
@@ -226,9 +316,9 @@ const CustomerReviewModal = ({
   }
 
   /*
-   * ---------------------------------------------------------
+   * =========================================================
    * MODAL
-   * ---------------------------------------------------------
+   * =========================================================
    */
 
   return (
@@ -242,7 +332,14 @@ const CustomerReviewModal = ({
       <KeyboardAvoidingView
         style={styles.modalRoot}
         behavior={
-          Platform.OS === "ios" ? "padding" : undefined
+          Platform.OS === "ios"
+            ? "padding"
+            : Platform.OS === "android"
+              ? "height"
+              : undefined
+        }
+        keyboardVerticalOffset={
+          Platform.OS === "ios" ? 10 : 0
         }
       >
         {/* BACKDROP */}
@@ -251,9 +348,7 @@ const CustomerReviewModal = ({
           style={styles.backdrop}
           onPress={handleClose}
           disabled={submitting}
-        >
-          {/* EMPTY PRESSABLE SPACE */}
-        </Pressable>
+        />
 
         {/* MODAL CARD */}
 
@@ -281,8 +376,6 @@ const CustomerReviewModal = ({
               isSmallMobile && styles.headerSmall,
             ]}
           >
-            {/* HEADER DECORATION */}
-
             <View style={styles.headerGlowOne} />
             <View style={styles.headerGlowTwo} />
 
@@ -291,6 +384,7 @@ const CustomerReviewModal = ({
             <Pressable
               onPress={handleClose}
               disabled={submitting}
+              hitSlop={8}
               style={({ pressed }) => [
                 styles.closeButton,
                 isSmallMobile &&
@@ -300,7 +394,6 @@ const CustomerReviewModal = ({
                   styles.closeButtonPressed,
                 submitting && styles.disabledOpacity,
               ]}
-              hitSlop={8}
             >
               <Ionicons
                 name="close"
@@ -318,8 +411,6 @@ const CustomerReviewModal = ({
                   styles.headerContentSmall,
               ]}
             >
-              {/* ICON */}
-
               <View
                 style={[
                   styles.headerIcon,
@@ -334,8 +425,6 @@ const CustomerReviewModal = ({
                 />
               </View>
 
-              {/* TITLE */}
-
               <Text
                 style={[
                   styles.headerTitle,
@@ -346,11 +435,10 @@ const CustomerReviewModal = ({
                   isDesktop &&
                     styles.headerTitleDesktop,
                 ]}
+                numberOfLines={2}
               >
                 Share Your Experience
               </Text>
-
-              {/* DESCRIPTION */}
 
               <Text
                 style={[
@@ -359,8 +447,9 @@ const CustomerReviewModal = ({
                     styles.headerDescriptionSmall,
                 ]}
               >
-                Your feedback helps us improve and helps
-                other customers choose with confidence.
+                Your feedback helps us improve and
+                helps other customers choose with
+                confidence.
               </Text>
             </View>
 
@@ -381,6 +470,7 @@ const CustomerReviewModal = ({
                   isSmallMobile &&
                     styles.headerStatusTextSmall,
                 ]}
+                numberOfLines={1}
               >
                 YOUR FEEDBACK MATTERS
               </Text>
@@ -393,8 +483,7 @@ const CustomerReviewModal = ({
 
           <View style={styles.contentWrapper}>
             <ScrollView
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
+              style={styles.scrollView}
               contentContainerStyle={[
                 styles.scrollContent,
                 {
@@ -404,6 +493,18 @@ const CustomerReviewModal = ({
                 isSmallMobile &&
                   styles.scrollContentSmall,
               ]}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="always"
+              keyboardDismissMode={
+                Platform.OS === "ios"
+                  ? "interactive"
+                  : "on-drag"
+              }
+              nestedScrollEnabled
+              automaticallyAdjustKeyboardInsets={
+                Platform.OS === "ios"
+              }
+              scrollEventThrottle={16}
             >
               {/* =================================================
                   APPOINTMENT CARD
@@ -416,8 +517,6 @@ const CustomerReviewModal = ({
                     styles.appointmentCardSmall,
                 ]}
               >
-                {/* TOP ACCENT */}
-
                 <View style={styles.appointmentAccent} />
 
                 <View
@@ -427,8 +526,6 @@ const CustomerReviewModal = ({
                       styles.appointmentRowSmall,
                   ]}
                 >
-                  {/* ICON */}
-
                   <View
                     style={[
                       styles.appointmentIcon,
@@ -442,8 +539,6 @@ const CustomerReviewModal = ({
                       color={COLORS.primary}
                     />
                   </View>
-
-                  {/* DETAILS */}
 
                   <View
                     style={styles.appointmentDetails}
@@ -465,6 +560,7 @@ const CustomerReviewModal = ({
                           styles.salonNameSmall,
                       ]}
                       numberOfLines={2}
+                      ellipsizeMode="tail"
                     >
                       {salon?.name || "Salon"}
                     </Text>
@@ -476,8 +572,10 @@ const CustomerReviewModal = ({
                           styles.serviceNameSmall,
                       ]}
                       numberOfLines={2}
+                      ellipsizeMode="tail"
                     >
-                      {service?.name || "Beauty Service"}
+                      {service?.name ||
+                        "Beauty Service"}
                     </Text>
 
                     {staff?.name ? (
@@ -503,6 +601,7 @@ const CustomerReviewModal = ({
                               styles.staffTextSmall,
                           ]}
                           numberOfLines={1}
+                          ellipsizeMode="tail"
                         >
                           {staff.name}
                         </Text>
@@ -510,7 +609,7 @@ const CustomerReviewModal = ({
                     ) : null}
                   </View>
 
-                  {/* COMPLETED BADGE */}
+                  {/* VISITED */}
 
                   <View
                     style={[
@@ -530,6 +629,7 @@ const CustomerReviewModal = ({
                     {!isSmallMobile && (
                       <Text
                         style={styles.completedText}
+                        numberOfLines={1}
                       >
                         VISITED
                       </Text>
@@ -539,7 +639,7 @@ const CustomerReviewModal = ({
               </View>
 
               {/* =================================================
-                  RATING SECTION
+                  RATING
               ================================================= */}
 
               <View
@@ -549,8 +649,6 @@ const CustomerReviewModal = ({
                     styles.ratingSectionSmall,
                 ]}
               >
-                {/* RATING ICON */}
-
                 <View
                   style={[
                     styles.ratingIcon,
@@ -565,19 +663,16 @@ const CustomerReviewModal = ({
                   />
                 </View>
 
-                {/* TITLE */}
-
                 <Text
                   style={[
                     styles.ratingTitle,
                     isSmallMobile &&
                       styles.ratingTitleSmall,
                   ]}
+                  numberOfLines={2}
                 >
                   How was your experience?
                 </Text>
-
-                {/* DESCRIPTION */}
 
                 <Text
                   style={[
@@ -585,13 +680,12 @@ const CustomerReviewModal = ({
                     isSmallMobile &&
                       styles.ratingDescriptionSmall,
                   ]}
+                  numberOfLines={2}
                 >
                   Tap a star to rate your appointment
                 </Text>
 
-                {/* =================================================
-                    STAR BOXES
-                ================================================= */}
+                {/* STARS */}
 
                 <View
                   style={[
@@ -608,6 +702,7 @@ const CustomerReviewModal = ({
                         key={star}
                         onPress={() => {
                           if (!submitting) {
+                            Keyboard.dismiss();
                             setRating(star);
                             setError("");
                           }
@@ -650,8 +745,6 @@ const CustomerReviewModal = ({
                           }
                         />
 
-                        {/* STAR NUMBER */}
-
                         <Text
                           style={[
                             styles.starNumber,
@@ -668,9 +761,7 @@ const CustomerReviewModal = ({
                   })}
                 </View>
 
-                {/* =================================================
-                    RATING RESULT
-                ================================================= */}
+                {/* RATING RESULT */}
 
                 <View
                   style={[
@@ -728,7 +819,7 @@ const CustomerReviewModal = ({
               </View>
 
               {/* =================================================
-                  COMMENT SECTION
+                  COMMENT
               ================================================= */}
 
               <View
@@ -750,7 +841,9 @@ const CustomerReviewModal = ({
                   <View
                     style={styles.commentTitleBlock}
                   >
-                    <View style={styles.commentTitleRow}>
+                    <View
+                      style={styles.commentTitleRow}
+                    >
                       <Ionicons
                         name="chatbubble-ellipses-outline"
                         size={
@@ -776,6 +869,7 @@ const CustomerReviewModal = ({
                         isSmallMobile &&
                           styles.commentDescriptionSmall,
                       ]}
+                      numberOfLines={3}
                     >
                       Share what you liked about the
                       salon, service or staff.
@@ -795,6 +889,7 @@ const CustomerReviewModal = ({
                         isSmallMobile &&
                           styles.optionalTextSmall,
                       ]}
+                      numberOfLines={1}
                     >
                       OPTIONAL
                     </Text>
@@ -802,7 +897,7 @@ const CustomerReviewModal = ({
                 </View>
 
                 {/* =================================================
-                    INPUT
+                    INPUT CONTAINER
                 ================================================= */}
 
                 <View
@@ -810,22 +905,35 @@ const CustomerReviewModal = ({
                     styles.inputContainer,
                     isSmallMobile &&
                       styles.inputContainerSmall,
+                    inputFocused &&
+                      styles.inputContainerFocused,
+                    submitting &&
+                      styles.inputContainerDisabled,
                   ]}
                 >
                   <TextInput
                     value={comment}
-                    onChangeText={(text) => {
-                      setComment(text);
-                      if (error) {
-                        setError("");
-                      }
-                    }}
+                    onChangeText={handleCommentChange}
+                    onFocus={handleInputFocus}
+                    onBlur={handleInputBlur}
                     maxLength={500}
                     multiline
-                    textAlignVertical="top"
                     editable={!submitting}
+                    selectTextOnFocus={false}
+                    blurOnSubmit={false}
+                    disableFullscreenUI
+                    scrollEnabled
+                    textAlign="left"
+                    textAlignVertical="top"
                     placeholder="What did you like about your experience?"
                     placeholderTextColor="#A89DAA"
+                    underlineColorAndroid="transparent"
+                    autoCorrect
+                    spellCheck
+                    autoCapitalize="sentences"
+                    importantForAutofill="no"
+                    keyboardAppearance="light"
+                    textBreakStrategy="simple"
                     style={[
                       styles.commentInput,
                       isSmallMobile &&
@@ -841,6 +949,7 @@ const CustomerReviewModal = ({
                       isSmallMobile &&
                         styles.characterCountSmall,
                     ]}
+                    pointerEvents="none"
                   >
                     <Text
                       style={[
@@ -939,8 +1048,8 @@ const CustomerReviewModal = ({
                       styles.trustTextSmall,
                   ]}
                 >
-                  Your review is securely linked to this
-                  completed appointment.
+                  Your review is securely linked to
+                  this completed appointment.
                 </Text>
               </View>
             </ScrollView>
@@ -957,12 +1066,8 @@ const CustomerReviewModal = ({
                 paddingHorizontal:
                   horizontalPadding,
               },
-              isSmallMobile &&
-                styles.footerSmall,
             ]}
           >
-            {/* FOOTER TOP LINE */}
-
             <View style={styles.footerTopLine} />
 
             <View
@@ -1000,6 +1105,9 @@ const CustomerReviewModal = ({
                     isSmallMobile &&
                       styles.maybeButtonTextSmall,
                   ]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.8}
                 >
                   Maybe Later
                 </Text>
@@ -1035,6 +1143,9 @@ const CustomerReviewModal = ({
                         isSmallMobile &&
                           styles.submitButtonTextSmall,
                       ]}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.78}
                     >
                       Submitting...
                     </Text>
@@ -1053,6 +1164,9 @@ const CustomerReviewModal = ({
                         isSmallMobile &&
                           styles.submitButtonTextSmall,
                       ]}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.78}
                     >
                       Submit Review
                     </Text>
@@ -1067,10 +1181,16 @@ const CustomerReviewModal = ({
   );
 };
 
+/*
+ * =============================================================
+ * STYLES
+ * =============================================================
+ */
+
 const styles = StyleSheet.create({
   /*
    * =========================================================
-   * ROOT / BACKDROP
+   * ROOT
    * =========================================================
    */
 
@@ -1081,11 +1201,7 @@ const styles = StyleSheet.create({
   },
 
   backdrop: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(15, 10, 20, 0.68)",
   },
 
@@ -1096,15 +1212,21 @@ const styles = StyleSheet.create({
    */
 
   modalCard: {
+    flexShrink: 1,
+    minHeight: 0,
+
     overflow: "hidden",
+
     borderRadius: 28,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.85)",
+
     backgroundColor: COLORS.white,
 
     shadowColor: "#120A16",
-    shadowOpacity: 0.30,
+    shadowOpacity: 0.3,
     shadowRadius: 45,
+
     shadowOffset: {
       width: 0,
       height: 24,
@@ -1114,7 +1236,7 @@ const styles = StyleSheet.create({
   },
 
   modalCardSmall: {
-    borderRadius: 22,
+    borderRadius: 21,
   },
 
   modalCardDesktop: {
@@ -1130,59 +1252,80 @@ const styles = StyleSheet.create({
   header: {
     position: "relative",
     overflow: "hidden",
+    flexShrink: 0,
+
     paddingTop: 22,
     paddingBottom: 20,
+
     backgroundColor: COLORS.primaryDeep,
+
     borderBottomWidth: 1,
     borderBottomColor: "rgba(255,255,255,0.10)",
   },
 
   headerSmall: {
-    paddingTop: 17,
-    paddingBottom: 16,
+    paddingTop: 15,
+    paddingBottom: 14,
   },
 
   headerGlowOne: {
     position: "absolute",
+
     width: 210,
     height: 210,
+
     borderRadius: 105,
+
     right: -90,
     top: -125,
+
     backgroundColor: "rgba(255,255,255,0.08)",
   },
 
   headerGlowTwo: {
     position: "absolute",
+
     width: 170,
     height: 170,
+
     borderRadius: 85,
+
     left: -90,
     bottom: -125,
+
     backgroundColor: "rgba(216,180,254,0.12)",
   },
 
   closeButton: {
     position: "absolute",
+
     right: 17,
     top: 17,
+
     width: 38,
     height: 38,
+
     borderRadius: 13,
+
     alignItems: "center",
     justifyContent: "center",
+
     backgroundColor: "rgba(255,255,255,0.12)",
+
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.18)",
+
     zIndex: 10,
   },
 
   closeButtonSmall: {
-    right: 12,
-    top: 12,
+    right: 10,
+    top: 10,
+
     width: 32,
     height: 32,
-    borderRadius: 11,
+
+    borderRadius: 10,
   },
 
   closeButtonPressed: {
@@ -1191,7 +1334,7 @@ const styles = StyleSheet.create({
   },
 
   disabledOpacity: {
-    opacity: 0.50,
+    opacity: 0.5,
   },
 
   headerContent: {
@@ -1199,39 +1342,53 @@ const styles = StyleSheet.create({
   },
 
   headerContentSmall: {
-    paddingRight: 38,
+    paddingRight: 37,
   },
 
   headerIcon: {
     width: 48,
     height: 48,
+
     borderRadius: 16,
+
     alignItems: "center",
     justifyContent: "center",
+
     backgroundColor: "rgba(255,255,255,0.13)",
+
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.16)",
   },
 
   headerIconSmall: {
-    width: 40,
-    height: 40,
-    borderRadius: 13,
+    width: 38,
+    height: 38,
+
+    borderRadius: 12,
   },
 
   headerTitle: {
     marginTop: 13,
+
     color: COLORS.white,
+
     fontSize: 24,
     lineHeight: 29,
+
     fontWeight: "900",
+
     letterSpacing: -0.5,
+
     includeFontPadding: false,
   },
 
   headerTitleSmall: {
+    marginTop: 9,
+
     fontSize: 18,
-    lineHeight: 23,
+    lineHeight: 22,
+
+    letterSpacing: -0.3,
   },
 
   headerTitleTablet: {
@@ -1246,35 +1403,50 @@ const styles = StyleSheet.create({
 
   headerDescription: {
     marginTop: 6,
+
     maxWidth: 500,
+
     color: "#EDE4F7",
+
     fontSize: 12.5,
     lineHeight: 20,
+
     fontWeight: "500",
+
     includeFontPadding: false,
   },
 
   headerDescriptionSmall: {
+    marginTop: 5,
+
     fontSize: 10.5,
-    lineHeight: 17,
+    lineHeight: 16,
   },
 
   headerStatus: {
     marginTop: 17,
+
     alignSelf: "flex-start",
+
     flexDirection: "row",
     alignItems: "center",
+
     gap: 7,
+
     paddingHorizontal: 10,
     paddingVertical: 6,
+
     borderRadius: 999,
+
     backgroundColor: "rgba(255,255,255,0.10)",
+
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.12)",
   },
 
   headerStatusSmall: {
-    marginTop: 12,
+    marginTop: 10,
+
     paddingHorizontal: 8,
     paddingVertical: 5,
   },
@@ -1282,22 +1454,29 @@ const styles = StyleSheet.create({
   headerStatusDot: {
     width: 6,
     height: 6,
+
     borderRadius: 3,
+
     backgroundColor: "#86EFAC",
   },
 
   headerStatusText: {
     color: "#E9DDF5",
+
     fontSize: 8.5,
     lineHeight: 11,
+
     fontWeight: "900",
+
     letterSpacing: 1,
+
     includeFontPadding: false,
   },
 
   headerStatusTextSmall: {
     fontSize: 7,
     lineHeight: 9,
+
     letterSpacing: 0.7,
   },
 
@@ -1310,7 +1489,13 @@ const styles = StyleSheet.create({
   contentWrapper: {
     flex: 1,
     minHeight: 0,
+
     backgroundColor: COLORS.surface,
+  },
+
+  scrollView: {
+    flex: 1,
+    minHeight: 0,
   },
 
   scrollContent: {
@@ -1319,7 +1504,7 @@ const styles = StyleSheet.create({
   },
 
   scrollContentSmall: {
-    paddingTop: 14,
+    paddingTop: 13,
     paddingBottom: 14,
   },
 
@@ -1332,15 +1517,20 @@ const styles = StyleSheet.create({
   appointmentCard: {
     position: "relative",
     overflow: "hidden",
+
     padding: 16,
+
     borderRadius: 20,
+
     borderWidth: 1,
     borderColor: COLORS.border,
+
     backgroundColor: COLORS.white,
 
     shadowColor: "#39233F",
     shadowOpacity: 0.055,
     shadowRadius: 18,
+
     shadowOffset: {
       width: 0,
       height: 7,
@@ -1350,45 +1540,55 @@ const styles = StyleSheet.create({
   },
 
   appointmentCardSmall: {
-    padding: 12,
-    borderRadius: 17,
+    padding: 11,
+    borderRadius: 16,
   },
 
   appointmentAccent: {
     position: "absolute",
+
     top: 0,
     left: 0,
+
     width: 4,
     height: "100%",
+
     backgroundColor: COLORS.primary,
   },
 
   appointmentRow: {
     flexDirection: "row",
     alignItems: "flex-start",
+
     gap: 12,
   },
 
   appointmentRowSmall: {
-    gap: 9,
+    gap: 8,
   },
 
   appointmentIcon: {
     width: 46,
     height: 46,
+
     flexShrink: 0,
+
     borderRadius: 15,
+
     alignItems: "center",
     justifyContent: "center",
+
     backgroundColor: COLORS.primarySoft,
+
     borderWidth: 1,
     borderColor: "#E9D5FF",
   },
 
   appointmentIconSmall: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
+    width: 37,
+    height: 37,
+
+    borderRadius: 11,
   },
 
   appointmentDetails: {
@@ -1398,133 +1598,178 @@ const styles = StyleSheet.create({
 
   appointmentEyebrow: {
     color: COLORS.primary,
+
     fontSize: 8.5,
     lineHeight: 11,
+
     fontWeight: "900",
+
     letterSpacing: 1.3,
+
     includeFontPadding: false,
   },
 
   appointmentEyebrowSmall: {
-    fontSize: 7,
+    fontSize: 6.8,
     lineHeight: 9,
-    letterSpacing: 0.9,
+
+    letterSpacing: 0.8,
   },
 
   salonName: {
     marginTop: 4,
+
     color: COLORS.textDark,
+
     fontSize: 15,
     lineHeight: 20,
+
     fontWeight: "900",
+
     includeFontPadding: false,
   },
 
   salonNameSmall: {
-    fontSize: 13,
-    lineHeight: 17,
+    marginTop: 3,
+
+    fontSize: 12.5,
+    lineHeight: 16,
   },
 
   serviceName: {
     marginTop: 2,
+
     color: COLORS.textSoft,
+
     fontSize: 12,
     lineHeight: 17,
+
     fontWeight: "600",
+
     includeFontPadding: false,
   },
 
   serviceNameSmall: {
-    fontSize: 10.5,
-    lineHeight: 15,
+    fontSize: 10,
+    lineHeight: 14,
   },
 
   staffPill: {
     alignSelf: "flex-start",
+
     maxWidth: "100%",
+
     marginTop: 8,
+
     flexDirection: "row",
     alignItems: "center",
+
     gap: 5,
+
     paddingHorizontal: 8,
     paddingVertical: 5,
+
     borderRadius: 9,
+
     backgroundColor: "#F7F4F8",
+
     borderWidth: 1,
     borderColor: COLORS.borderSoft,
   },
 
   staffPillSmall: {
-    marginTop: 6,
-    paddingHorizontal: 7,
+    marginTop: 5,
+
+    paddingHorizontal: 6,
     paddingVertical: 4,
+
     borderRadius: 8,
   },
 
   staffText: {
     flexShrink: 1,
+
     color: COLORS.textMedium,
+
     fontSize: 9.5,
     lineHeight: 13,
+
     fontWeight: "800",
+
     includeFontPadding: false,
   },
 
   staffTextSmall: {
-    fontSize: 8.5,
-    lineHeight: 11,
+    fontSize: 8,
+    lineHeight: 10,
   },
 
   completedBadge: {
     flexShrink: 0,
+
     flexDirection: "row",
     alignItems: "center",
+
     gap: 5,
+
     paddingHorizontal: 8,
     paddingVertical: 6,
+
     borderRadius: 999,
+
     backgroundColor: COLORS.greenSoft,
+
     borderWidth: 1,
     borderColor: "#BBF7D0",
   },
 
   completedBadgeSmall: {
-    paddingHorizontal: 6,
-    paddingVertical: 5,
+    paddingHorizontal: 5,
+    paddingVertical: 4,
   },
 
   completedText: {
     color: COLORS.green,
+
     fontSize: 7.5,
     lineHeight: 10,
+
     fontWeight: "900",
+
     letterSpacing: 0.7,
+
     includeFontPadding: false,
   },
 
   /*
    * =========================================================
-   * RATING SECTION
+   * RATING
    * =========================================================
    */
 
   ratingSection: {
     marginTop: 20,
+
     paddingVertical: 4,
+
     alignItems: "center",
   },
 
   ratingSectionSmall: {
-    marginTop: 15,
+    marginTop: 14,
   },
 
   ratingIcon: {
     width: 42,
     height: 42,
+
     borderRadius: 15,
+
     alignItems: "center",
     justifyContent: "center",
+
     backgroundColor: COLORS.amberSoft,
+
     borderWidth: 1,
     borderColor: "#FDE68A",
   },
@@ -1532,66 +1777,93 @@ const styles = StyleSheet.create({
   ratingIconSmall: {
     width: 34,
     height: 34,
-    borderRadius: 12,
+
+    borderRadius: 11,
   },
 
   ratingTitle: {
     marginTop: 11,
+
     color: COLORS.textDark,
+
     fontSize: 18,
     lineHeight: 23,
+
     fontWeight: "900",
+
     textAlign: "center",
+
     includeFontPadding: false,
   },
 
   ratingTitleSmall: {
-    marginTop: 8,
+    marginTop: 7,
+
     fontSize: 14,
-    lineHeight: 19,
+    lineHeight: 18,
   },
 
   ratingDescription: {
     marginTop: 4,
+
     color: COLORS.textMuted,
+
     fontSize: 11,
     lineHeight: 16,
+
     fontWeight: "500",
+
     textAlign: "center",
+
     includeFontPadding: false,
   },
 
   ratingDescriptionSmall: {
-    fontSize: 9.5,
-    lineHeight: 14,
+    marginTop: 3,
+
+    fontSize: 9.2,
+    lineHeight: 13,
   },
+
+  /*
+   * =========================================================
+   * STARS
+   * =========================================================
+   */
 
   starsContainer: {
     marginTop: 17,
+
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+
     gap: 8,
   },
 
   starsContainerSmall: {
-    marginTop: 12,
-    gap: 5,
+    marginTop: 11,
+    gap: 4,
   },
 
   starButton: {
     width: 54,
     height: 54,
+
     borderRadius: 16,
+
     alignItems: "center",
     justifyContent: "center",
+
     backgroundColor: COLORS.white,
+
     borderWidth: 1,
     borderColor: COLORS.border,
 
     shadowColor: "#38243E",
     shadowOpacity: 0.035,
     shadowRadius: 9,
+
     shadowOffset: {
       width: 0,
       height: 4,
@@ -1603,16 +1875,19 @@ const styles = StyleSheet.create({
   starButtonSmall: {
     width: 43,
     height: 43,
-    borderRadius: 13,
+
+    borderRadius: 12,
   },
 
   starButtonActive: {
     backgroundColor: "#FFF9EA",
+
     borderColor: "#FCD34D",
 
     shadowColor: COLORS.amber,
     shadowOpacity: 0.13,
     shadowRadius: 13,
+
     shadowOffset: {
       width: 0,
       height: 5,
@@ -1628,16 +1903,22 @@ const styles = StyleSheet.create({
 
   starNumber: {
     position: "absolute",
+
     bottom: 3,
+
     color: "#B6ACB8",
+
     fontSize: 6.5,
     lineHeight: 8,
+
     fontWeight: "900",
+
     includeFontPadding: false,
   },
 
   starNumberSmall: {
     bottom: 2,
+
     fontSize: 5.5,
     lineHeight: 7,
   },
@@ -1648,22 +1929,31 @@ const styles = StyleSheet.create({
 
   ratingResult: {
     marginTop: 12,
+
     minHeight: 31,
+
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+
     gap: 6,
+
     paddingHorizontal: 12,
     paddingVertical: 7,
+
     borderRadius: 999,
+
     backgroundColor: COLORS.amberSoft,
+
     borderWidth: 1,
     borderColor: "#FDE68A",
   },
 
   ratingResultSmall: {
-    marginTop: 9,
+    marginTop: 8,
+
     minHeight: 27,
+
     paddingHorizontal: 9,
     paddingVertical: 5,
   },
@@ -1675,9 +1965,12 @@ const styles = StyleSheet.create({
 
   ratingResultText: {
     color: COLORS.amberDark,
+
     fontSize: 10.5,
     lineHeight: 14,
+
     fontWeight: "900",
+
     includeFontPadding: false,
   },
 
@@ -1689,14 +1982,18 @@ const styles = StyleSheet.create({
   ratingResultDivider: {
     width: 1,
     height: 12,
+
     backgroundColor: "#F3D58A",
   },
 
   ratingScore: {
     color: COLORS.textMedium,
+
     fontSize: 9.5,
     lineHeight: 13,
+
     fontWeight: "800",
+
     includeFontPadding: false,
   },
 
@@ -1707,9 +2004,12 @@ const styles = StyleSheet.create({
 
   ratingEmptyText: {
     color: COLORS.textMuted,
+
     fontSize: 9.5,
     lineHeight: 13,
+
     fontWeight: "600",
+
     includeFontPadding: false,
   },
 
@@ -1729,18 +2029,19 @@ const styles = StyleSheet.create({
   },
 
   commentSectionSmall: {
-    marginTop: 16,
+    marginTop: 15,
   },
 
   commentHeader: {
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
+
     gap: 12,
   },
 
   commentHeaderSmall: {
-    gap: 8,
+    gap: 7,
   },
 
   commentTitleBlock: {
@@ -1751,138 +2052,251 @@ const styles = StyleSheet.create({
   commentTitleRow: {
     flexDirection: "row",
     alignItems: "center",
+
     gap: 7,
   },
 
   commentTitle: {
     color: COLORS.textDark,
+
     fontSize: 14,
     lineHeight: 19,
+
     fontWeight: "900",
+
     includeFontPadding: false,
   },
 
   commentTitleSmall: {
     fontSize: 11.5,
-    lineHeight: 16,
+    lineHeight: 15,
   },
 
   commentDescription: {
     marginTop: 3,
+
     color: COLORS.textMuted,
+
     fontSize: 10.5,
     lineHeight: 16,
+
     fontWeight: "500",
+
     includeFontPadding: false,
   },
 
   commentDescriptionSmall: {
-    fontSize: 8.5,
-    lineHeight: 13,
+    fontSize: 8.3,
+    lineHeight: 12,
   },
 
   optionalBadge: {
     flexShrink: 0,
+
     paddingHorizontal: 9,
     paddingVertical: 6,
+
     borderRadius: 999,
+
     backgroundColor: "#F4F1F5",
   },
 
   optionalBadgeSmall: {
-    paddingHorizontal: 7,
-    paddingVertical: 5,
+    paddingHorizontal: 6,
+    paddingVertical: 4,
   },
 
   optionalText: {
     color: COLORS.textMuted,
+
     fontSize: 7.5,
     lineHeight: 10,
+
     fontWeight: "900",
+
     letterSpacing: 0.7,
+
     includeFontPadding: false,
   },
 
   optionalTextSmall: {
-    fontSize: 6.5,
+    fontSize: 6.2,
     lineHeight: 8,
   },
 
+  /*
+   * =========================================================
+   * INPUT CONTAINER
+   * =========================================================
+   */
+
   inputContainer: {
-  position: "relative",
-  marginTop: 11,
-  minHeight: 126,
-  borderRadius: 17,
-  borderWidth: 1,
-  borderColor: COLORS.border,
-  backgroundColor: "#FAF8FB",
-  overflow: "hidden",
-  boxSizing: "border-box",
-},
+    position: "relative",
+
+    marginTop: 11,
+
+    height: 136,
+    minHeight: 136,
+
+    width: "100%",
+
+    borderRadius: 17,
+
+    borderWidth: 1,
+    borderColor: COLORS.border,
+
+    backgroundColor: "#FAF8FB",
+
+    overflow: "hidden",
+  },
+
   inputContainerSmall: {
     marginTop: 8,
-    minHeight: 105,
+
+    height: 116,
+    minHeight: 116,
+
     borderRadius: 14,
   },
 
- commentInput: {
-  width: "100%",
-  minHeight: 126,
+  inputContainerFocused: {
+    borderColor: COLORS.primary,
 
-  paddingHorizontal: 14,
-  paddingTop: 13,
-  paddingBottom: 31,
+    borderWidth: 1.5,
 
-  color: COLORS.textDark,
-  fontSize: 12,
-  lineHeight: 19,
-  fontWeight: "500",
-  includeFontPadding: false,
-  borderWidth: 0,
-  borderColor: "transparent",
-  outlineStyle: "none",
-  outlineWidth: 0,
-  backgroundColor: "transparent",
-  boxSizing: "border-box",
-},
+    backgroundColor: COLORS.white,
+
+    shadowColor: COLORS.primary,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+
+    elevation: 1,
+  },
+
+  inputContainerDisabled: {
+    opacity: 0.72,
+  },
+
+  /*
+   * =========================================================
+   * TEXT INPUT
+   * =========================================================
+   *
+   * IMPORTANT:
+   * No `outline`
+   * No `outlineStyle`
+   * No `outlineWidth`
+   * No `boxSizing`
+   *
+   * These were causing the web console error.
+   *
+   * Also using flex:1 instead of height:"100%" so Android
+   * handles multiline input + padding correctly.
+   */
+
+  commentInput: {
+    flex: 1,
+
+    minHeight: 0,
+
+    width: "100%",
+
+    paddingLeft: 14,
+    paddingRight: 14,
+
+    paddingTop: 13,
+    paddingBottom: 34,
+
+    margin: 0,
+
+    color: COLORS.textDark,
+
+    fontSize: 12,
+    lineHeight: 19,
+
+    fontWeight: "500",
+
+    includeFontPadding: false,
+
+    backgroundColor: "transparent",
+
+    borderWidth: 0,
+    borderColor: "transparent",
+
+    textAlign: "left",
+    textAlignVertical: "top",
+
+    /*
+     * Android native TextInput focus is controlled by the
+     * wrapper border above, so there is no second border.
+     */
+  },
 
   commentInputSmall: {
-  minHeight: 105,
-  paddingHorizontal: 11,
-  paddingTop: 10,
-  paddingBottom: 27,
-  fontSize: 10,
-  lineHeight: 16,
-  borderWidth: 0,
-  borderColor: "transparent",
-  outlineStyle: "none",
-  outlineWidth: 0,
-  backgroundColor: "transparent",
-  boxSizing: "border-box",
-},
+    flex: 1,
+
+    minHeight: 0,
+
+    width: "100%",
+
+    paddingLeft: 11,
+    paddingRight: 11,
+
+    paddingTop: 10,
+    paddingBottom: 30,
+
+    fontSize: 10,
+    lineHeight: 16,
+
+    includeFontPadding: false,
+
+    textAlign: "left",
+    textAlignVertical: "top",
+  },
+
+  /*
+   * =========================================================
+   * CHARACTER COUNT
+   * =========================================================
+   */
+
   characterCount: {
     position: "absolute",
+
     right: 10,
     bottom: 8,
+
     paddingHorizontal: 7,
     paddingVertical: 4,
+
     borderRadius: 7,
+
     backgroundColor: "#F0ECF2",
   },
 
   characterCountSmall: {
     right: 8,
     bottom: 7,
+
     paddingHorizontal: 6,
     paddingVertical: 3,
+
     borderRadius: 6,
   },
 
   characterCountText: {
     color: COLORS.textMuted,
+
     fontSize: 7.5,
     lineHeight: 10,
+
     fontWeight: "800",
+
     includeFontPadding: false,
   },
 
@@ -1899,36 +2313,50 @@ const styles = StyleSheet.create({
 
   errorCard: {
     marginTop: 12,
+
     flexDirection: "row",
     alignItems: "flex-start",
+
     gap: 9,
+
     padding: 11,
+
     borderRadius: 14,
+
     borderWidth: 1,
     borderColor: COLORS.redBorder,
+
     backgroundColor: COLORS.redSoft,
   },
 
   errorCardSmall: {
     marginTop: 9,
+
     gap: 7,
+
     padding: 9,
+
     borderRadius: 12,
   },
 
   errorIcon: {
     width: 29,
     height: 29,
+
     flexShrink: 0,
+
     alignItems: "center",
     justifyContent: "center",
+
     borderRadius: 10,
+
     backgroundColor: "#FEE2E2",
   },
 
   errorIconSmall: {
     width: 25,
     height: 25,
+
     borderRadius: 8,
   },
 
@@ -1939,9 +2367,12 @@ const styles = StyleSheet.create({
 
   errorTitle: {
     color: "#991B1B",
+
     fontSize: 10.5,
     lineHeight: 14,
+
     fontWeight: "900",
+
     includeFontPadding: false,
   },
 
@@ -1952,10 +2383,14 @@ const styles = StyleSheet.create({
 
   errorMessage: {
     marginTop: 2,
+
     color: "#B91C1C",
+
     fontSize: 9.5,
     lineHeight: 15,
+
     fontWeight: "600",
+
     includeFontPadding: false,
   },
 
@@ -1972,47 +2407,65 @@ const styles = StyleSheet.create({
 
   trustStrip: {
     marginTop: 13,
+
     flexDirection: "row",
     alignItems: "center",
+
     gap: 8,
+
     paddingHorizontal: 10,
     paddingVertical: 9,
+
     borderRadius: 12,
+
     backgroundColor: COLORS.greenSoft,
+
     borderWidth: 1,
     borderColor: "#DCFCE7",
   },
 
   trustStripSmall: {
     marginTop: 9,
+
     gap: 6,
+
     paddingHorizontal: 8,
     paddingVertical: 7,
+
     borderRadius: 10,
   },
 
   trustIcon: {
     width: 27,
     height: 27,
+
     flexShrink: 0,
+
     alignItems: "center",
     justifyContent: "center",
+
     borderRadius: 9,
+
     backgroundColor: COLORS.white,
   },
 
   trustIconSmall: {
     width: 23,
     height: 23,
+
     borderRadius: 7,
   },
 
   trustText: {
     flex: 1,
+
     color: "#52705B",
+
     fontSize: 8.5,
     lineHeight: 13,
+
     fontWeight: "600",
+
     includeFontPadding: false,
   },
 
@@ -2028,94 +2481,122 @@ const styles = StyleSheet.create({
    */
 
   footer: {
+    flexShrink: 0,
+
     backgroundColor: COLORS.white,
   },
 
-  footerSmall: {},
-
   footerTopLine: {
     height: 1,
+
     backgroundColor: COLORS.border,
   },
 
   footerActions: {
     paddingTop: 12,
     paddingBottom: 13,
+
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-end",
+
     gap: 9,
   },
 
   footerActionsSmall: {
     paddingTop: 9,
     paddingBottom: 10,
-    gap: 7,
+
+    gap: 6,
   },
 
   /*
+   * =========================================================
    * MAYBE LATER
+   * =========================================================
    */
 
   maybeButton: {
     minHeight: 45,
     minWidth: 120,
+
     paddingHorizontal: 15,
+
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+
     gap: 7,
+
     borderRadius: 14,
+
     borderWidth: 1,
     borderColor: COLORS.border,
+
     backgroundColor: COLORS.white,
   },
 
   maybeButtonSmall: {
     minHeight: 39,
     minWidth: 0,
+
     flex: 0.9,
-    paddingHorizontal: 9,
+
+    paddingHorizontal: 7,
+
     borderRadius: 12,
-    gap: 5,
+
+    gap: 4,
   },
 
   maybeButtonPressed: {
     backgroundColor: "#F7F4F8",
+
     transform: [{ scale: 0.98 }],
   },
 
   maybeButtonText: {
     color: COLORS.textMedium,
+
     fontSize: 10.5,
     lineHeight: 14,
+
     fontWeight: "900",
+
     includeFontPadding: false,
   },
 
   maybeButtonTextSmall: {
-    fontSize: 8.5,
+    fontSize: 8.2,
     lineHeight: 11,
   },
 
   /*
+   * =========================================================
    * SUBMIT
+   * =========================================================
    */
 
   submitButton: {
     minHeight: 45,
     minWidth: 165,
+
     paddingHorizontal: 17,
+
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+
     gap: 7,
+
     borderRadius: 14,
+
     backgroundColor: COLORS.primary,
 
     shadowColor: COLORS.primary,
     shadowOpacity: 0.22,
     shadowRadius: 16,
+
     shadowOffset: {
       width: 0,
       height: 7,
@@ -2127,33 +2608,43 @@ const styles = StyleSheet.create({
   submitButtonSmall: {
     minHeight: 39,
     minWidth: 0,
+
     flex: 1.1,
-    paddingHorizontal: 9,
+
+    paddingHorizontal: 7,
+
     borderRadius: 12,
-    gap: 5,
+
+    gap: 4,
   },
 
   submitButtonDisabled: {
     backgroundColor: "#C7BEC9",
+
     shadowOpacity: 0,
+
     elevation: 0,
   },
 
   submitButtonPressed: {
     backgroundColor: COLORS.primaryDark,
+
     transform: [{ scale: 0.985 }],
   },
 
   submitButtonText: {
     color: COLORS.white,
+
     fontSize: 10.5,
     lineHeight: 14,
+
     fontWeight: "900",
+
     includeFontPadding: false,
   },
 
   submitButtonTextSmall: {
-    fontSize: 8.5,
+    fontSize: 8.2,
     lineHeight: 11,
   },
 });

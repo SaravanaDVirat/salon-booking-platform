@@ -23,7 +23,7 @@ import {
   activateService,
 } from "../../../../services/adminServiceService";
 
-const API_URL = "http://localhost:1812";
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 const COLORS = {
   primary: "#6D28D9",
@@ -575,7 +575,7 @@ const ServicesManagement = () => {
   const loadSalons = useCallback(async () => {
     try {
       setLoadingSalons(true);
-      const data = await fetchJson(`${API_URL}/api/salons`);
+      const data = await fetchJson(`${API_URL}/salons`);
       const salonData = data?.salons || data?.data || data || [];
       setSalons(Array.isArray(salonData) ? salonData : []);
     } catch (error) {
@@ -592,7 +592,7 @@ const ServicesManagement = () => {
   const loadCategories = useCallback(async () => {
     try {
       setLoadingCategories(true);
-      const data = await fetchJson(`${API_URL}/api/categories`);
+      const data = await fetchJson(`${API_URL}/categories`);
       const categoryData =
         data?.categories || data?.data || data || [];
       setCategories(

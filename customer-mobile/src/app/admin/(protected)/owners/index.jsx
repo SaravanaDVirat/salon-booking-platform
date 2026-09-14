@@ -21,7 +21,10 @@ import {
   View,
 } from "react-native";
 
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import {
+  Ionicons,
+  MaterialCommunityIcons,
+} from "@expo/vector-icons";
 
 import {
   getSalonOwners,
@@ -96,10 +99,7 @@ const getInitial = (name) => {
   if (!name) return "S";
 
   return (
-    name
-      .trim()
-      .charAt(0)
-      .toUpperCase() || "S"
+    name.trim().charAt(0).toUpperCase() || "S"
   );
 };
 
@@ -116,7 +116,6 @@ const getErrorMessage = (
 
 /* ============================================================
    ADMIN FOOTER
-   Built inside this file so there is no dependency/path issue.
 ============================================================ */
 
 const AdminFooter = ({ width }) => {
@@ -129,7 +128,11 @@ const AdminFooter = ({ width }) => {
           styles.footer,
           {
             paddingHorizontal:
-              width < 380 ? 16 : width < 600 ? 20 : 30,
+              width < 380
+                ? 16
+                : width < 600
+                ? 20
+                : 30,
           },
         ]}
       >
@@ -139,11 +142,11 @@ const AdminFooter = ({ width }) => {
             !isCompact && styles.footerTopDesktop,
           ]}
         >
-          {/* Brand */}
           <View
             style={[
               styles.footerBrand,
-              !isCompact && styles.footerBrandDesktop,
+              !isCompact &&
+                styles.footerBrandDesktop,
             ]}
           >
             <View style={styles.footerLogo}>
@@ -159,17 +162,19 @@ const AdminFooter = ({ width }) => {
                 LUMORA
               </Text>
 
-              <Text style={styles.footerBrandDescription}>
+              <Text
+                style={styles.footerBrandDescription}
+              >
                 Smart salon management platform
               </Text>
             </View>
           </View>
 
-          {/* Footer info */}
           <View
             style={[
               styles.footerLinks,
-              !isCompact && styles.footerLinksDesktop,
+              !isCompact &&
+                styles.footerLinksDesktop,
             ]}
           >
             <View style={styles.footerLinkBlock}>
@@ -221,7 +226,8 @@ const AdminFooter = ({ width }) => {
         <View
           style={[
             styles.footerBottom,
-            !isCompact && styles.footerBottomDesktop,
+            !isCompact &&
+              styles.footerBottomDesktop,
           ]}
         >
           <Text style={styles.footerCopyright}>
@@ -231,7 +237,8 @@ const AdminFooter = ({ width }) => {
           <View
             style={[
               styles.footerLegal,
-              !isCompact && styles.footerLegalDesktop,
+              !isCompact &&
+                styles.footerLegalDesktop,
             ]}
           >
             <Text style={styles.footerLegalText}>
@@ -368,19 +375,21 @@ const OwnerCard = ({
     <View
       style={[
         styles.ownerCard,
-        width < 600 && styles.ownerCardMobile,
+        width < 600 &&
+          styles.ownerCardMobile,
       ]}
     >
-      {/* Decorative accent */}
       <View style={styles.ownerCardGlow} />
 
-      {/* Header */}
+      {/* HEADER */}
+
       <View style={styles.ownerHeader}>
         <View style={styles.ownerIdentity}>
           <View
             style={[
               styles.ownerAvatar,
-              isSmall && styles.ownerAvatarSmall,
+              isSmall &&
+                styles.ownerAvatarSmall,
             ]}
           >
             <Text
@@ -409,7 +418,6 @@ const OwnerCard = ({
           </View>
         </View>
 
-        {/* Status */}
         <View
           style={[
             styles.statusBadge,
@@ -449,9 +457,11 @@ const OwnerCard = ({
         </View>
       </View>
 
-      {/* Body */}
+      {/* BODY */}
+
       <View style={styles.ownerBody}>
-        {/* Email */}
+        {/* EMAIL */}
+
         <View style={styles.infoRow}>
           <View style={styles.infoIcon}>
             <Ionicons
@@ -476,7 +486,8 @@ const OwnerCard = ({
           </View>
         </View>
 
-        {/* Phone */}
+        {/* PHONE */}
+
         <View
           style={[
             styles.infoRow,
@@ -511,7 +522,8 @@ const OwnerCard = ({
           </View>
         </View>
 
-        {/* Salons */}
+        {/* SALONS */}
+
         <View style={styles.salonsBox}>
           <View style={styles.salonsHeader}>
             <View style={styles.salonsIcon}>
@@ -571,7 +583,8 @@ const OwnerCard = ({
           )}
         </View>
 
-        {/* Actions */}
+        {/* ACTIONS */}
+
         <View style={styles.ownerActions}>
           <Pressable
             onPress={() => onEdit(owner)}
@@ -638,7 +651,7 @@ const OwnerCard = ({
 };
 
 /* ============================================================
-   MODAL INPUT
+   FORM INPUT
 ============================================================ */
 
 const FormInput = ({
@@ -673,7 +686,9 @@ const FormInput = ({
           onChangeText={onChangeText}
           placeholder={placeholder}
           placeholderTextColor="#A8B1C0"
-          keyboardType={keyboardType || "default"}
+          keyboardType={
+            keyboardType || "default"
+          }
           secureTextEntry={secureTextEntry}
           autoCapitalize={
             autoCapitalize || "sentences"
@@ -735,7 +750,9 @@ const StatusFilterModal = ({
 
         <View style={styles.filterModal}>
           <View style={styles.filterModalHeader}>
-            <View style={styles.filterModalTitleWrap}>
+            <View
+              style={styles.filterModalTitleWrap}
+            >
               <View style={styles.filterModalIcon}>
                 <Ionicons
                   name="funnel-outline"
@@ -744,12 +761,18 @@ const StatusFilterModal = ({
                 />
               </View>
 
-              <View style={styles.filterModalTitleText}>
-                <Text style={styles.filterModalTitle}>
+              <View
+                style={styles.filterModalTitleText}
+              >
+                <Text
+                  style={styles.filterModalTitle}
+                >
                   Filter accounts
                 </Text>
 
-                <Text style={styles.filterModalSubtitle}>
+                <Text
+                  style={styles.filterModalSubtitle}
+                >
                   Choose account status
                 </Text>
               </View>
@@ -804,7 +827,9 @@ const StatusFilterModal = ({
                     />
                   </View>
 
-                  <View style={styles.filterOptionText}>
+                  <View
+                    style={styles.filterOptionText}
+                  >
                     <Text
                       style={[
                         styles.filterOptionTitle,
@@ -906,14 +931,17 @@ const OwnerFormModal = ({
               },
             ]}
           >
-            {/* Header */}
             <View style={styles.formModalHeader}>
-              <View style={styles.formModalHeaderGlow} />
+              <View
+                style={styles.formModalHeaderGlow}
+              />
 
               <View
                 style={styles.formModalTitleArea}
               >
-                <View style={styles.formModalIcon}>
+                <View
+                  style={styles.formModalIcon}
+                >
                   <Ionicons
                     name={
                       editingOwner
@@ -968,7 +996,6 @@ const OwnerFormModal = ({
               </Pressable>
             </View>
 
-            {/* Form */}
             <ScrollView
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
@@ -1050,7 +1077,9 @@ const OwnerFormModal = ({
                   />
 
                   <Text
-                    style={styles.passwordHintText}
+                    style={
+                      styles.passwordHintText
+                    }
                   >
                     Leave this field empty if you
                     don't want to change the current
@@ -1060,7 +1089,6 @@ const OwnerFormModal = ({
               )}
             </ScrollView>
 
-            {/* Footer */}
             <View style={styles.formModalFooter}>
               <Pressable
                 disabled={saving}
@@ -1068,10 +1096,13 @@ const OwnerFormModal = ({
                 style={({ pressed }) => [
                   styles.cancelButton,
                   pressed && styles.pressed,
-                  saving && styles.disabledButton,
+                  saving &&
+                    styles.disabledButton,
                 ]}
               >
-                <Text style={styles.cancelButtonText}>
+                <Text
+                  style={styles.cancelButtonText}
+                >
                   Cancel
                 </Text>
               </Pressable>
@@ -1082,7 +1113,8 @@ const OwnerFormModal = ({
                 style={({ pressed }) => [
                   styles.submitButton,
                   pressed && styles.pressed,
-                  saving && styles.disabledButton,
+                  saving &&
+                    styles.disabledButton,
                 ]}
               >
                 {saving ? (
@@ -1093,7 +1125,9 @@ const OwnerFormModal = ({
                     />
 
                     <Text
-                      style={styles.submitButtonText}
+                      style={
+                        styles.submitButtonText
+                      }
                     >
                       Saving...
                     </Text>
@@ -1107,7 +1141,9 @@ const OwnerFormModal = ({
                     />
 
                     <Text
-                      style={styles.submitButtonText}
+                      style={
+                        styles.submitButtonText
+                      }
                     >
                       {editingOwner
                         ? "Update Owner"
@@ -1125,6 +1161,186 @@ const OwnerFormModal = ({
 };
 
 /* ============================================================
+   CONFIRM ACTION MODAL
+   WEB + ANDROID SAFE
+============================================================ */
+
+const ConfirmActionModal = ({
+  visible,
+  type,
+  owner,
+  loading,
+  onCancel,
+  onConfirm,
+}) => {
+  if (!owner) return null;
+
+  const config = {
+    activate: {
+      title: "Activate salon owner?",
+      description: `Are you sure you want to activate ${
+        owner?.name || "this salon owner"
+      }? This account will regain access.`,
+      icon: "play-circle-outline",
+      iconColor: COLORS.emerald,
+      iconBackground: COLORS.emeraldSoft,
+      buttonStyle:
+        styles.confirmActivateButton,
+      buttonText: "Activate",
+    },
+
+    deactivate: {
+      title: "Deactivate salon owner?",
+      description: `Are you sure you want to deactivate ${
+        owner?.name || "this salon owner"
+      }? This account will lose access.`,
+      icon: "pause-circle-outline",
+      iconColor: COLORS.amber,
+      iconBackground: COLORS.amberSoft,
+      buttonStyle:
+        styles.confirmDeactivateButton,
+      buttonText: "Deactivate",
+    },
+
+    delete: {
+      title: "Delete salon owner?",
+      description: `Are you sure you want to delete ${
+        owner?.name || "this salon owner"
+      }? This action cannot be undone.`,
+      icon: "trash-outline",
+      iconColor: COLORS.rose,
+      iconBackground: COLORS.roseSoft,
+      buttonStyle:
+        styles.confirmDeleteButton,
+      buttonText: "Delete",
+    },
+  };
+
+  const current = config[type];
+
+  if (!current) return null;
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      statusBarTranslucent
+      onRequestClose={() => {
+        if (!loading) {
+          onCancel();
+        }
+      }}
+    >
+      <View style={styles.confirmOverlay}>
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          disabled={loading}
+          onPress={onCancel}
+        />
+
+        <View
+          style={styles.confirmModal}
+          onStartShouldSetResponder={() => true}
+        >
+          <View
+            style={[
+              styles.confirmIcon,
+              {
+                backgroundColor:
+                  current.iconBackground,
+              },
+            ]}
+          >
+            <Ionicons
+              name={current.icon}
+              size={29}
+              color={current.iconColor}
+            />
+          </View>
+
+          <View style={styles.confirmContent}>
+            <Text style={styles.confirmTitle}>
+              {current.title}
+            </Text>
+
+            <Text
+              style={styles.confirmDescription}
+            >
+              {current.description}
+            </Text>
+          </View>
+
+          <View style={styles.confirmActions}>
+            <Pressable
+              disabled={loading}
+              onPress={onCancel}
+              style={({ pressed }) => [
+                styles.confirmCancelButton,
+                pressed &&
+                  !loading &&
+                  styles.pressed,
+                loading &&
+                  styles.disabledButton,
+              ]}
+            >
+              <Text
+                style={styles.confirmCancelText}
+              >
+                Cancel
+              </Text>
+            </Pressable>
+
+            <Pressable
+              disabled={loading}
+              onPress={onConfirm}
+              style={({ pressed }) => [
+                styles.confirmButton,
+                current.buttonStyle,
+                pressed &&
+                  !loading &&
+                  styles.pressed,
+                loading &&
+                  styles.disabledButton,
+              ]}
+            >
+              {loading ? (
+                <>
+                  <ActivityIndicator
+                    size="small"
+                    color="#FFFFFF"
+                  />
+
+                  <Text
+                    style={styles.confirmButtonText}
+                  >
+                    Processing...
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Ionicons
+                    name={current.icon}
+                    size={16}
+                    color="#FFFFFF"
+                  />
+
+                  <Text
+                    style={styles.confirmButtonText}
+                  >
+                    {current.buttonText}
+                  </Text>
+                </>
+              )}
+            </Pressable>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
+/* ============================================================
    MAIN COMPONENT
 ============================================================ */
 
@@ -1133,7 +1349,8 @@ const SalonOwners = () => {
 
   const [owners, setOwners] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const [refreshing, setRefreshing] =
+    useState(false);
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] =
@@ -1149,6 +1366,20 @@ const SalonOwners = () => {
     useState(null);
 
   const [saving, setSaving] = useState(false);
+
+  /* ==========================================================
+     NEW ACTION STATE
+  ========================================================== */
+
+  const [actionLoading, setActionLoading] =
+    useState(false);
+
+  const [confirmModal, setConfirmModal] =
+    useState({
+      visible: false,
+      type: null,
+      owner: null,
+    });
 
   const [formData, setFormData] = useState({
     name: "",
@@ -1221,31 +1452,34 @@ const SalonOwners = () => {
      PULL TO REFRESH
   ========================================================== */
 
-  const handleRefresh = useCallback(async () => {
-    try {
-      setRefreshing(true);
+  const handleRefresh = useCallback(
+    async () => {
+      try {
+        setRefreshing(true);
 
-      const data = await getSalonOwners();
+        const data = await getSalonOwners();
 
-      setOwners(
-        Array.isArray(data?.users)
-          ? data.users
-          : []
-      );
-    } catch (error) {
-      console.error(error);
+        setOwners(
+          Array.isArray(data?.users)
+            ? data.users
+            : []
+        );
+      } catch (error) {
+        console.error(error);
 
-      Alert.alert(
-        "Refresh failed",
-        getErrorMessage(
-          error,
-          "Unable to refresh salon owners"
-        )
-      );
-    } finally {
-      setRefreshing(false);
-    }
-  }, []);
+        Alert.alert(
+          "Refresh failed",
+          getErrorMessage(
+            error,
+            "Unable to refresh salon owners"
+          )
+        );
+      } finally {
+        setRefreshing(false);
+      }
+    },
+    []
+  );
 
   /* ==========================================================
      FILTER
@@ -1374,7 +1608,10 @@ const SalonOwners = () => {
       return;
     }
 
-    if (!editingOwner && !password.trim()) {
+    if (
+      !editingOwner &&
+      !password.trim()
+    ) {
       Alert.alert(
         "Missing information",
         "Please enter a password."
@@ -1439,125 +1676,157 @@ const SalonOwners = () => {
   };
 
   /* ==========================================================
-     STATUS
+     OPEN STATUS CONFIRMATION
   ========================================================== */
 
   const handleToggleStatus = (owner) => {
-    const action = owner?.isActive
-      ? "deactivate"
-      : "activate";
+    if (!owner?._id || actionLoading) {
+      return;
+    }
 
-    const actionText =
-      action === "activate"
-        ? "activate"
-        : "deactivate";
-
-    Alert.alert(
-      `${
-        action === "activate"
-          ? "Activate"
-          : "Deactivate"
-      } owner`,
-      `Are you sure you want to ${actionText} ${
-        owner?.name || "this owner"
-      }?`,
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text:
-            action === "activate"
-              ? "Activate"
-              : "Deactivate",
-          style:
-            action === "activate"
-              ? "default"
-              : "destructive",
-          onPress: async () => {
-            try {
-              if (owner?.isActive) {
-                await deactivateSalonOwner(
-                  owner._id
-                );
-              } else {
-                await activateSalonOwner(
-                  owner._id
-                );
-              }
-
-              await fetchSalonOwners({
-                showLoader: false,
-              });
-            } catch (error) {
-              console.error(error);
-
-              Alert.alert(
-                "Status update failed",
-                getErrorMessage(
-                  error,
-                  "Failed to update status"
-                )
-              );
-            }
-          },
-        },
-      ]
-    );
+    setConfirmModal({
+      visible: true,
+      type: owner?.isActive
+        ? "deactivate"
+        : "activate",
+      owner,
+    });
   };
 
   /* ==========================================================
-     DELETE
+     OPEN DELETE CONFIRMATION
   ========================================================== */
 
   const handleDelete = (owner) => {
-    Alert.alert(
-      "Delete salon owner",
-      `Are you sure you want to delete ${
-        owner?.name || "this owner"
-      }? This action cannot be undone.`,
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await deleteSalonOwner(
-                owner._id
-              );
+    if (!owner?._id || actionLoading) {
+      return;
+    }
 
-              setOwners((prev) =>
-                prev.filter(
-                  (item) =>
-                    item?._id !== owner?._id
-                )
-              );
-
-              Alert.alert(
-                "Deleted",
-                "Salon owner deleted successfully."
-              );
-            } catch (error) {
-              console.error(error);
-
-              Alert.alert(
-                "Delete failed",
-                getErrorMessage(
-                  error,
-                  "Failed to delete salon owner"
-                )
-              );
-            }
-          },
-        },
-      ]
-    );
+    setConfirmModal({
+      visible: true,
+      type: "delete",
+      owner,
+    });
   };
+
+  /* ==========================================================
+     CLOSE CONFIRMATION
+  ========================================================== */
+
+  const closeConfirmModal = () => {
+    if (actionLoading) return;
+
+    setConfirmModal({
+      visible: false,
+      type: null,
+      owner: null,
+    });
+  };
+
+  /* ==========================================================
+     EXECUTE CONFIRMED ACTION
+  ========================================================== */
+
+  const executeConfirmedAction =
+    async () => {
+      const {
+        type,
+        owner,
+      } = confirmModal;
+
+      if (
+        !owner?._id ||
+        !type ||
+        actionLoading
+      ) {
+        return;
+      }
+
+      try {
+        setActionLoading(true);
+
+        /* ACTIVATE */
+
+        if (type === "activate") {
+          await activateSalonOwner(
+            owner._id
+          );
+        }
+
+        /* DEACTIVATE */
+
+        if (type === "deactivate") {
+          await deactivateSalonOwner(
+            owner._id
+          );
+        }
+
+        /* DELETE */
+
+        if (type === "delete") {
+          await deleteSalonOwner(
+            owner._id
+          );
+        }
+
+        /* REFRESH DATA */
+
+        if (type === "delete") {
+          setOwners((prev) =>
+            prev.filter(
+              (item) =>
+                item?._id !== owner?._id
+            )
+          );
+        } else {
+          await fetchSalonOwners({
+            showLoader: false,
+          });
+        }
+
+        /* CLOSE MODAL */
+
+        setConfirmModal({
+          visible: false,
+          type: null,
+          owner: null,
+        });
+
+        /* SUCCESS */
+
+        Alert.alert(
+          "Success",
+          type === "activate"
+            ? "Salon owner activated successfully."
+            : type === "deactivate"
+            ? "Salon owner deactivated successfully."
+            : "Salon owner deleted successfully."
+        );
+      } catch (error) {
+        console.error(
+          `Salon owner ${type} failed:`,
+          error
+        );
+
+        setConfirmModal({
+          visible: false,
+          type: null,
+          owner: null,
+        });
+
+        Alert.alert(
+          "Operation failed",
+          getErrorMessage(
+            error,
+            type === "delete"
+              ? "Failed to delete salon owner."
+              : "Failed to update salon owner status."
+          )
+        );
+      } finally {
+        setActionLoading(false);
+      }
+    };
 
   /* ==========================================================
      CLEAR FILTERS
@@ -1607,7 +1876,9 @@ const SalonOwners = () => {
               Loading salon owners...
             </Text>
 
-            <Text style={styles.loadingSubtitle}>
+            <Text
+              style={styles.loadingSubtitle}
+            >
               Please wait while we fetch the accounts
             </Text>
           </View>
@@ -1653,9 +1924,7 @@ const SalonOwners = () => {
             },
           ]}
         >
-          {/* ==================================================
-              PAGE HEADER
-          ================================================== */}
+          {/* PAGE HEADER */}
 
           <View style={styles.heroCard}>
             <View style={styles.heroGlowOne} />
@@ -1668,9 +1937,7 @@ const SalonOwners = () => {
                   styles.heroContentMobile,
               ]}
             >
-              <View
-                style={styles.heroTitleArea}
-              >
+              <View style={styles.heroTitleArea}>
                 <View
                   style={[
                     styles.heroIcon,
@@ -1687,9 +1954,7 @@ const SalonOwners = () => {
                   />
                 </View>
 
-                <View
-                  style={styles.heroTextArea}
-                >
+                <View style={styles.heroTextArea}>
                   <Text
                     style={[
                       styles.heroTitle,
@@ -1702,9 +1967,7 @@ const SalonOwners = () => {
                   </Text>
 
                   <Text
-                    style={
-                      styles.heroSubtitle
-                    }
+                    style={styles.heroSubtitle}
                     numberOfLines={0}
                   >
                     Manage salon owners and their
@@ -1737,9 +2000,7 @@ const SalonOwners = () => {
             </View>
           </View>
 
-          {/* ==================================================
-              STATS
-          ================================================== */}
+          {/* STATS */}
 
           <View
             style={[
@@ -1773,9 +2034,7 @@ const SalonOwners = () => {
             />
           </View>
 
-          {/* ==================================================
-              SEARCH / FILTER
-          ================================================== */}
+          {/* SEARCH / FILTER */}
 
           <View style={styles.filterCard}>
             <View
@@ -1785,7 +2044,6 @@ const SalonOwners = () => {
                   styles.filterRowStacked,
               ]}
             >
-              {/* Search */}
               <View
                 style={[
                   styles.searchShell,
@@ -1816,7 +2074,9 @@ const SalonOwners = () => {
 
                 {search.length > 0 && (
                   <Pressable
-                    onPress={() => setSearch("")}
+                    onPress={() =>
+                      setSearch("")
+                    }
                     style={styles.searchClear}
                   >
                     <Ionicons
@@ -1828,7 +2088,6 @@ const SalonOwners = () => {
                 )}
               </View>
 
-              {/* FULL WIDTH STATUS SELECT */}
               <Pressable
                 onPress={() =>
                   setShowFilterModal(true)
@@ -1841,8 +2100,12 @@ const SalonOwners = () => {
                   pressed && styles.pressed,
                 ]}
               >
-                <View style={styles.statusSelectLeft}>
-                  <View style={styles.statusSelectIcon}>
+                <View
+                  style={styles.statusSelectLeft}
+                >
+                  <View
+                    style={styles.statusSelectIcon}
+                  >
                     <Ionicons
                       name="funnel-outline"
                       size={17}
@@ -1856,7 +2119,9 @@ const SalonOwners = () => {
                     }
                   >
                     <Text
-                      style={styles.statusSelectLabel}
+                      style={
+                        styles.statusSelectLabel
+                      }
                     >
                       STATUS
                     </Text>
@@ -1885,7 +2150,6 @@ const SalonOwners = () => {
               </Pressable>
             </View>
 
-            {/* Filter summary */}
             {hasFilters && (
               <View style={styles.filterSummary}>
                 <View
@@ -1900,7 +2164,9 @@ const SalonOwners = () => {
                   />
 
                   <Text
-                    style={styles.filterSummaryText}
+                    style={
+                      styles.filterSummaryText
+                    }
                     numberOfLines={0}
                   >
                     Filters applied
@@ -1929,12 +2195,9 @@ const SalonOwners = () => {
             )}
           </View>
 
-          {/* ==================================================
-              MAIN LIST CARD
-          ================================================== */}
+          {/* MAIN LIST */}
 
           <View style={styles.mainCard}>
-            {/* List Header */}
             <View
               style={[
                 styles.listHeader,
@@ -1942,9 +2205,7 @@ const SalonOwners = () => {
                   styles.listHeaderMobile,
               ]}
             >
-              <View
-                style={styles.listTitleArea}
-              >
+              <View style={styles.listTitleArea}>
                 <View style={styles.listIcon}>
                   <Ionicons
                     name="business-outline"
@@ -1964,9 +2225,7 @@ const SalonOwners = () => {
                   </Text>
 
                   <Text
-                    style={
-                      styles.listSubtitle
-                    }
+                    style={styles.listSubtitle}
                   >
                     Showing{" "}
                     {filteredOwners.length} of{" "}
@@ -1991,10 +2250,6 @@ const SalonOwners = () => {
                 />
               </Pressable>
             </View>
-
-            {/* =================================================
-                EMPTY STATE
-            ================================================= */}
 
             {filteredOwners.length === 0 ? (
               <View style={styles.emptyState}>
@@ -2068,10 +2323,6 @@ const SalonOwners = () => {
                 )}
               </View>
             ) : (
-              /* =================================================
-                 RESPONSIVE OWNER GRID
-              ================================================= */
-
               <View
                 style={[
                   styles.ownerGrid,
@@ -2081,27 +2332,27 @@ const SalonOwners = () => {
                     styles.ownerGridSmall,
                 ]}
               >
-                {filteredOwners.map((owner) => (
-                  <OwnerCard
-                    key={owner?._id}
-                    owner={owner}
-                    onEdit={openEditModal}
-                    onToggle={
-                      handleToggleStatus
-                    }
-                    onDelete={handleDelete}
-                    width={width}
-                  />
-                ))}
+                {filteredOwners.map(
+                  (owner) => (
+                    <OwnerCard
+                      key={owner?._id}
+                      owner={owner}
+                      onEdit={openEditModal}
+                      onToggle={
+                        handleToggleStatus
+                      }
+                      onDelete={handleDelete}
+                      width={width}
+                    />
+                  )
+                )}
               </View>
             )}
           </View>
         </View>
       </ScrollView>
 
-      {/* ======================================================
-          STATUS FILTER MODAL
-      ====================================================== */}
+      {/* STATUS FILTER */}
 
       <StatusFilterModal
         visible={showFilterModal}
@@ -2112,9 +2363,7 @@ const SalonOwners = () => {
         }
       />
 
-      {/* ======================================================
-          CREATE / EDIT MODAL
-      ====================================================== */}
+      {/* CREATE / EDIT */}
 
       <OwnerFormModal
         visible={showFormModal}
@@ -2125,6 +2374,17 @@ const SalonOwners = () => {
         onClose={closeFormModal}
         onSubmit={handleSubmit}
         width={width}
+      />
+
+      {/* ACTIVATE / DEACTIVATE / DELETE */}
+
+      <ConfirmActionModal
+        visible={confirmModal.visible}
+        type={confirmModal.type}
+        owner={confirmModal.owner}
+        loading={actionLoading}
+        onCancel={closeConfirmModal}
+        onConfirm={executeConfirmedAction}
       />
     </View>
   );
@@ -2385,7 +2645,8 @@ const styles = StyleSheet.create({
     borderRadius: 21,
     borderWidth: 1,
     borderColor: "#FFFFFF",
-    backgroundColor: "rgba(255,255,255,0.96)",
+    backgroundColor:
+      "rgba(255,255,255,0.96)",
     padding: 18,
 
     shadowColor: "#1E233C",
@@ -2465,7 +2726,8 @@ const styles = StyleSheet.create({
     borderRadius: 21,
     borderWidth: 1,
     borderColor: "#FFFFFF",
-    backgroundColor: "rgba(255,255,255,0.95)",
+    backgroundColor:
+      "rgba(255,255,255,0.95)",
     padding: 13,
     marginBottom: 16,
 
@@ -2648,7 +2910,8 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     borderWidth: 1,
     borderColor: "#FFFFFF",
-    backgroundColor: "rgba(255,255,255,0.97)",
+    backgroundColor:
+      "rgba(255,255,255,0.97)",
 
     shadowColor: "#1E233C",
     shadowOffset: {
@@ -3040,7 +3303,8 @@ const styles = StyleSheet.create({
     borderRadius: 11,
     borderWidth: 1,
     borderColor: "#FFFFFF",
-    backgroundColor: "rgba(255,255,255,0.82)",
+    backgroundColor:
+      "rgba(255,255,255,0.82)",
     flexDirection: "row",
     alignItems: "flex-start",
   },
@@ -3078,7 +3342,7 @@ const styles = StyleSheet.create({
   },
 
   /* ==========================================================
-     OWNER ACTIONS
+     ACTIONS
   ========================================================== */
 
   ownerActions: {
@@ -3216,7 +3480,7 @@ const styles = StyleSheet.create({
   },
 
   /* ==========================================================
-     FILTER MODAL
+     MODALS
   ========================================================== */
 
   modalKeyboard: {
@@ -3225,7 +3489,8 @@ const styles = StyleSheet.create({
 
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(15,23,42,0.64)",
+    backgroundColor:
+      "rgba(15,23,42,0.64)",
     alignItems: "center",
     justifyContent: "center",
     padding: 14,
@@ -3624,6 +3889,125 @@ const styles = StyleSheet.create({
   },
 
   /* ==========================================================
+     CONFIRM MODAL
+  ========================================================== */
+
+  confirmOverlay: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 18,
+    backgroundColor:
+      "rgba(15, 23, 42, 0.58)",
+  },
+
+  confirmModal: {
+    width: "100%",
+    maxWidth: 460,
+    borderRadius: 24,
+    backgroundColor: COLORS.surface,
+    paddingHorizontal: 22,
+    paddingTop: 24,
+    paddingBottom: 20,
+
+    shadowColor: "#000000",
+    shadowOffset: {
+      width: 0,
+      height: 18,
+    },
+    shadowOpacity: 0.18,
+    shadowRadius: 30,
+    elevation: 12,
+  },
+
+  confirmIcon: {
+    width: 58,
+    height: 58,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    alignSelf: "center",
+  },
+
+  confirmContent: {
+    marginTop: 18,
+    alignItems: "center",
+  },
+
+  confirmTitle: {
+    color: COLORS.text,
+    fontSize: 20,
+    lineHeight: 26,
+    fontWeight: "900",
+    textAlign: "center",
+  },
+
+  confirmDescription: {
+    marginTop: 9,
+    maxWidth: 390,
+    color: COLORS.mutedDark,
+    fontSize: 13,
+    lineHeight: 20,
+    fontWeight: "500",
+    textAlign: "center",
+  },
+
+  confirmActions: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginTop: 24,
+  },
+
+  confirmCancelButton: {
+    flex: 1,
+    minHeight: 46,
+    borderRadius: 13,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 14,
+    backgroundColor: "#F8FAFC",
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+
+  confirmCancelText: {
+    color: COLORS.textSecondary,
+    fontSize: 13,
+    fontWeight: "800",
+  },
+
+  confirmButton: {
+    flex: 1,
+    minHeight: 46,
+    borderRadius: 13,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7,
+    paddingHorizontal: 14,
+  },
+
+  confirmActivateButton: {
+    backgroundColor: COLORS.emerald,
+  },
+
+  confirmDeactivateButton: {
+    backgroundColor: COLORS.amber,
+  },
+
+  confirmDeleteButton: {
+    backgroundColor: COLORS.rose,
+  },
+
+  confirmButtonText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "800",
+  },
+
+  /* ==========================================================
      FOOTER
   ========================================================== */
 
@@ -3740,7 +4124,8 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 1,
     marginTop: 23,
-    backgroundColor: "rgba(148,163,184,0.12)",
+    backgroundColor:
+      "rgba(148,163,184,0.12)",
   },
 
   footerBottom: {

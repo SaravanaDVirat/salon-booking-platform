@@ -1192,6 +1192,8 @@ const CustomerStaffSelection = () => {
                 maxWidth: contentMaxWidth,
                 paddingHorizontal: horizontalPadding,
               },
+              (isMediumMobile || isLargeMobile) &&
+                styles.bottomBarInnerMobile,
               isSmallMobile &&
                 styles.bottomBarInnerSmall,
             ]}
@@ -1199,6 +1201,8 @@ const CustomerStaffSelection = () => {
             <View
               style={[
                 styles.bottomSelectionInfo,
+                (isMediumMobile || isLargeMobile) &&
+                  styles.bottomSelectionInfoMobile,
                 isSmallMobile &&
                   styles.bottomSelectionInfoSmall,
               ]}
@@ -1245,6 +1249,8 @@ const CustomerStaffSelection = () => {
                 <Text
                   style={[
                     styles.bottomSelectedName,
+                    (isMediumMobile || isLargeMobile) &&
+                      styles.bottomSelectedNameMobile,
                     isSmallMobile &&
                       styles.bottomSelectedNameSmall,
                   ]}
@@ -1265,6 +1271,8 @@ const CustomerStaffSelection = () => {
                 styles.continueButton,
                 !selectedStaff &&
                   styles.continueButtonDisabled,
+                (isMediumMobile || isLargeMobile) &&
+                  styles.continueButtonMobile,
                 isSmallMobile &&
                   styles.continueButtonSmall,
                 pressed &&
@@ -2585,6 +2593,16 @@ const styles = StyleSheet.create({
     paddingBottom: 11,
   },
 
+  bottomBarInnerMobile: {
+    minHeight: 112,
+    flexDirection: "column",
+    alignItems: "stretch",
+    justifyContent: "center",
+    gap: 8,
+    paddingTop: 9,
+    paddingBottom: 9,
+  },
+
   bottomBarInnerSmall: {
     minHeight: 104,
     flexDirection: "column",
@@ -2597,6 +2615,16 @@ const styles = StyleSheet.create({
   bottomSelectionInfo: {
     flex: 1,
     minWidth: 0,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 11,
+  },
+
+  bottomSelectionInfoMobile: {
+    width: "100%",
+    flex: 0,
+    minWidth: 0,
+    minHeight: 38,
     flexDirection: "row",
     alignItems: "center",
     gap: 11,
@@ -2662,6 +2690,12 @@ const styles = StyleSheet.create({
     lineHeight: 15,
   },
 
+  bottomSelectedNameMobile: {
+    marginTop: 3,
+    fontSize: 12.5,
+    lineHeight: 17,
+  },
+
   continueButton: {
     minWidth: 215,
     height: 50,
@@ -2681,6 +2715,15 @@ const styles = StyleSheet.create({
       height: 8,
     },
     elevation: 5,
+  },
+
+  continueButtonMobile: {
+    width: "100%",
+    minWidth: 0,
+    height: 43,
+    flexShrink: 0,
+    borderRadius: 14,
+    paddingHorizontal: 14,
   },
 
   continueButtonSmall: {

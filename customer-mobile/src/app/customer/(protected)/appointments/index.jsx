@@ -557,13 +557,14 @@ const CustomerMyAppointments = () => {
                 <Text
                   style={[
                     styles.pageTitle,
+                    isMobile && styles.pageTitleMobile,
                     isSmallMobile && styles.pageTitleSmall,
                     isTablet && styles.pageTitleTablet,
                     isDesktop && styles.pageTitleDesktop,
                   ]}
-                  numberOfLines={1}
-                  adjustsFontSizeToFit
-                  minimumFontScale={0.78}
+                  numberOfLines={isMobile ? 2 : 1}
+                  adjustsFontSizeToFit={!isMobile}
+                  minimumFontScale={0.9}
                 >
                   My Appointments
                 </Text>
@@ -694,7 +695,12 @@ const CustomerMyAppointments = () => {
                   <Text style={styles.resultsEyebrow}>
                     BOOKING ACTIVITY
                   </Text>
-                  <Text style={styles.resultsTitle}>
+                  <Text
+                    style={[
+                      styles.resultsTitle,
+                      isMobile && styles.resultsTitleMobile,
+                    ]}
+                  >
                     Your appointments
                   </Text>
                 </View>
@@ -1018,10 +1024,16 @@ const styles = StyleSheet.create({
     includeFontPadding: false,
   },
 
+  pageTitleMobile: {
+    fontSize: 32,
+    lineHeight: 38,
+    letterSpacing: -1.15,
+  },
+
   pageTitleSmall: {
-    fontSize: 31,
-    lineHeight: 37,
-    letterSpacing: -1.1,
+    fontSize: 28,
+    lineHeight: 34,
+    letterSpacing: -1,
   },
 
   pageTitleTablet: {
@@ -1113,9 +1125,9 @@ const styles = StyleSheet.create({
   },
 
   filterScrollContent: {
-    flexGrow: 1,
     alignItems: "center",
     gap: 4,
+    paddingRight: 4,
   },
 
   filterButton: {
@@ -1274,6 +1286,12 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     letterSpacing: -0.8,
     includeFontPadding: false,
+  },
+
+  resultsTitleMobile: {
+    fontSize: 24,
+    lineHeight: 29,
+    letterSpacing: -0.65,
   },
 
   resultsPill: {
@@ -1504,7 +1522,7 @@ const styles = StyleSheet.create({
 
   cardHeaderMobile: {
     minHeight: 86,
-    paddingHorizontal: 14,
+    paddingHorizontal: 13,
     paddingTop: 15,
     paddingBottom: 14,
     gap: 9,
@@ -1547,7 +1565,7 @@ const styles = StyleSheet.create({
   },
 
   serviceInfoMobile: {
-    paddingRight: 86,
+    paddingRight: 72,
   },
 
   serviceTitle: {
@@ -1560,8 +1578,9 @@ const styles = StyleSheet.create({
   },
 
   serviceTitleSmall: {
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 12.5,
+    lineHeight: 17,
+    letterSpacing: -0.15,
   },
 
   locationRow: {

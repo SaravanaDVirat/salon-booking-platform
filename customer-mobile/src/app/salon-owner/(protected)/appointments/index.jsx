@@ -548,15 +548,15 @@ const AppointmentManagement = () => {
                 </View>
 
                 <Text
-                  style={[
-                    styles.heroTitle,
-                    isSmallPhone && styles.heroTitleSmall,
-                  ]}
-                  numberOfLines={2}
-                  adjustsFontSizeToFit={false}
-                >
-                  Appointments
-                </Text>
+  style={[
+    styles.heroTitle,
+    isPhone && styles.heroTitlePhone,
+  ]}
+  numberOfLines={1}
+  adjustsFontSizeToFit={false}
+>
+  Appointments
+</Text>
 
                 <Text style={styles.heroSubtitle}>
                   View and manage appointments across your salons from one place.
@@ -2334,10 +2334,11 @@ const styles = StyleSheet.create({
     letterSpacing: -1.8,
   },
 
-  heroTitleSmall: {
-    fontSize: 34,
-    lineHeight: 38,
-  },
+ heroTitlePhone: {
+  fontSize: 32,
+  lineHeight: 38,
+  letterSpacing: -1.2,
+},
 
   heroSubtitle: {
     marginTop: 9,

@@ -687,6 +687,7 @@ const SalonDetails = () => {
     width >= 360 && width < 430;
   const isLargeMobile =
     width >= 430 && width < 768;
+  const isMobile = width < 768;
   const isTablet =
     width >= 768 && width < 1100;
   const isDesktop = width >= 1100;
@@ -1159,15 +1160,20 @@ const SalonDetails = () => {
           <View
             style={[
               styles.infoStrip,
+              isMobile && styles.infoStripMobile,
               {
-                flexDirection:
-                  isSmallMobile
-                    ? "column"
-                    : "row",
+                flexDirection: isMobile ? "column" : "row",
+                alignItems: isMobile ? "stretch" : "center",
+                justifyContent: isMobile ? "center" : "space-between",
               },
             ]}
           >
-            <View style={styles.infoItem}>
+            <View
+              style={[
+                styles.infoItem,
+                isMobile && styles.infoItemMobile,
+              ]}
+            >
               <View style={styles.infoIcon}>
                 <Ionicons
                   name="shield-checkmark-outline"
@@ -1187,11 +1193,19 @@ const SalonDetails = () => {
               </View>
             </View>
 
-            {!isSmallMobile && (
-              <View style={styles.infoDivider} />
-            )}
+            <View
+              style={[
+                styles.infoDivider,
+                isMobile && styles.infoDividerMobile,
+              ]}
+            />
 
-            <View style={styles.infoItem}>
+            <View
+              style={[
+                styles.infoItem,
+                isMobile && styles.infoItemMobile,
+              ]}
+            >
               <View style={styles.infoIcon}>
                 <Ionicons
                   name="calendar-clear-outline"
@@ -1211,11 +1225,19 @@ const SalonDetails = () => {
               </View>
             </View>
 
-            {!isSmallMobile && (
-              <View style={styles.infoDivider} />
-            )}
+            <View
+              style={[
+                styles.infoDivider,
+                isMobile && styles.infoDividerMobile,
+              ]}
+            />
 
-            <View style={styles.infoItem}>
+            <View
+              style={[
+                styles.infoItem,
+                isMobile && styles.infoItemMobile,
+              ]}
+            >
               <View style={styles.infoIcon}>
                 <Ionicons
                   name="sparkles-outline"
@@ -2111,9 +2133,9 @@ const styles = StyleSheet.create({
 
   infoStrip: {
     width: "100%",
-    marginTop: 18,
+    marginTop: 24,
     paddingHorizontal: 18,
-    paddingVertical: 17,
+    paddingVertical: 18,
     borderRadius: 23,
     borderWidth: 1,
     borderColor: COLORS.border,
@@ -2123,12 +2145,27 @@ const styles = StyleSheet.create({
     gap: 14,
   },
 
+  infoStripMobile: {
+    paddingVertical: 10,
+    gap: 0,
+  },
+
   infoItem: {
     flex: 1,
     minWidth: 0,
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
+  },
+
+  infoItemMobile: {
+    width: "100%",
+    flex: 0,
+    alignSelf: "stretch",
+    minHeight: 64,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 2,
   },
 
   infoIcon: {
@@ -2167,6 +2204,11 @@ const styles = StyleSheet.create({
     width: 1,
     height: 32,
     backgroundColor: COLORS.border,
+  },
+
+  infoDividerMobile: {
+    width: "100%",
+    height: 1,
   },
 
   // ===================================================

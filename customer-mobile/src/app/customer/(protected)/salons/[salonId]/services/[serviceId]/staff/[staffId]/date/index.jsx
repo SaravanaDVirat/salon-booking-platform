@@ -7,6 +7,7 @@ import React, {
 
 import {
   ActivityIndicator,
+  Modal,
   Platform,
   Pressable,
   RefreshControl,
@@ -20,6 +21,7 @@ import {
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 import {
   getCustomerStaffAvailability,
@@ -189,13 +191,6 @@ const CustomerStaffDateSlots = () => {
 
   const maxContentWidth = 1480;
 
-  /* =======================================================
-     ROUTER DATA
-
-     Expo Router does not have React Router's location.state.
-     We support JSON params if another page sends them.
-  ======================================================= */
-
   const salon = useMemo(
     () => safeJsonParse(params.salon) || null,
     [params.salon]
@@ -216,6 +211,7 @@ const CustomerStaffDateSlots = () => {
   ======================================================= */
 
   const [selectedDate, setSelectedDate] = useState("");
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [availability, setAvailability] = useState(null);
   const [slots, setSlots] = useState([]);
   const [selectedSlot, setSelectedSlot] = useState(null);
@@ -419,14 +415,6 @@ const CustomerStaffDateSlots = () => {
       `/services/${serviceId}` +
       `/staff/${staffId}/confirm`;
 
-    /*
-      React Router state does not exist in Expo Router.
-
-      We pass the required booking information through
-      route params. If the confirmation page refetches
-      salon/service/staff using IDs, these JSON params can
-      simply be ignored there.
-    */
 
     router.push({
       pathname: nextPath,
@@ -499,6 +487,30 @@ const CustomerStaffDateSlots = () => {
     isTablet,
     isLaptop,
   ]);
+
+  const sectionHorizontalPadding = isSmallMobile
+    ? 15
+    : isMobile
+    ? 17
+    : isTablet
+    ? 20
+    : 22;
+
+  const slotGap = isSmallMobile ? 9 : 11;
+
+  const effectiveContentWidth = Math.min(width, maxContentWidth);
+  const slotContainerWidth = Math.max(
+    0,
+    effectiveContentWidth -
+      horizontalPadding * 2 -
+      sectionHorizontalPadding * 2
+  );
+
+  const slotButtonWidth = Math.max(
+    0,
+    (slotContainerWidth - slotGap * (slotColumns - 1)) /
+      slotColumns
+  );
 
   /* =======================================================
      STAFF SPECIALIZATION
@@ -581,9 +593,9 @@ const CustomerStaffDateSlots = () => {
           style={[
             styles.contentContainer,
             {
-              paddingHorizontal:
-                horizontalPadding,
+              paddingHorizontal: horizontalPadding,
               maxWidth: maxContentWidth,
+              paddingTop: isSmallMobile ? 14 : isMobile ? 16 : 20,
             },
           ]}
         >
@@ -600,6 +612,9 @@ const CustomerStaffDateSlots = () => {
                   : isMobile
                   ? 26
                   : 34,
+                flexDirection: isMobile ? "column" : "row",
+                alignItems: isMobile ? "stretch" : "flex-start",
+                gap: isMobile ? 11 : 13,
               },
             ]}
           >
@@ -619,7 +634,12 @@ const CustomerStaffDateSlots = () => {
               />
             </Pressable>
 
-            <View style={styles.headerContent}>
+            <View
+              style={[
+                styles.headerContent,
+                isMobile && styles.headerContentMobile,
+              ]}
+            >
               <View style={styles.stepBadge}>
                 <View style={styles.stepBadgeDot} />
 
@@ -639,6 +659,13 @@ const CustomerStaffDateSlots = () => {
                       : isTablet
                       ? 38
                       : 46,
+                    lineHeight: isSmallMobile
+                      ? 35
+                      : isMobile
+                      ? 39
+                      : isTablet
+                      ? 46
+                      : 54,
                   },
                 ]}
               >
@@ -656,7 +683,15 @@ const CustomerStaffDateSlots = () => {
               PROGRESS STEPPER
           ================================================= */}
 
-          <View style={styles.progressCard}>
+          <View
+            style={[
+              styles.progressCard,
+              {
+                paddingHorizontal: isSmallMobile ? 6 : isMobile ? 8 : 12,
+                paddingVertical: isSmallMobile ? 8 : isMobile ? 10 : 13,
+              },
+            ]}
+          >
             <ProgressStep
               number="✓"
               label="Service"
@@ -720,14 +755,12 @@ const CustomerStaffDateSlots = () => {
               eyebrow="SELECTED STYLIST"
               title={
                 staff?.name ||
-                "Selected Stylist"
+                "Stylist Selected"
               }
               subtitle={staffSpecialization}
               accent={COLORS.violet500}
               containerStyle={
-                isTablet ||
-                isLaptop ||
-                isLargeDesktop
+                width >= 760
                   ? styles.infoCardHalf
                   : styles.infoCardFull
               }
@@ -742,16 +775,14 @@ const CustomerStaffDateSlots = () => {
               eyebrow="SELECTED SERVICE"
               title={
                 service?.name ||
-                "Selected Service"
+                "Service Selected"
               }
               subtitle={
-                salon?.name || "Selected Salon"
+                salon?.name || "Salon Selected"
               }
               accent={COLORS.fuchsia500}
               containerStyle={
-                isTablet ||
-                isLaptop ||
-                isLargeDesktop
+                width >= 760
                   ? styles.infoCardHalf
                   : styles.infoCardFull
               }
@@ -762,7 +793,7 @@ const CustomerStaffDateSlots = () => {
               DATE CARD
           ================================================= */}
 
-          <View style={styles.sectionCard}>
+          <View style={[styles.sectionCard, { padding: isSmallMobile ? 15 : isMobile ? 17 : isTablet ? 20 : 22 }]}>
             <LinearGradient
               colors={[
                 COLORS.violet600,
@@ -810,10 +841,12 @@ const CustomerStaffDateSlots = () => {
               style={[
                 styles.dateInputWrapper,
                 {
-                  maxWidth:
-                    isMobile
-                      ? "100%"
-                      : 520,
+                  maxWidth: isMobile
+                    ? "100%"
+                    : isTablet
+                    ? 560
+                    : 520,
+                  height: isSmallMobile ? 52 : 56,
                 },
               ]}
             >
@@ -832,17 +865,14 @@ const CustomerStaffDateSlots = () => {
                 />
               ) : (
                 <Pressable
-                  onPress={() => {
-                    /*
-                      Native date picker can be plugged here.
-
-                      Current UI intentionally avoids using
-                      a web-only input inside React Native.
-                    */
-                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Select appointment date"
+                  onPress={() => setShowDatePicker(true)}
                   style={styles.nativeDatePlaceholder}
                 >
                   <Text
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
                     style={[
                       styles.nativeDateText,
                       !selectedDate &&
@@ -853,9 +883,130 @@ const CustomerStaffDateSlots = () => {
                       ? formatDate(selectedDate)
                       : "Select appointment date"}
                   </Text>
+
+                  <Ionicons
+                    name="chevron-down"
+                    size={17}
+                    color={COLORS.slate400}
+                    style={styles.dateChevron}
+                  />
                 </Pressable>
               )}
             </View>
+
+            {/* NATIVE MOBILE DATE PICKER */}
+            {Platform.OS !== "web" && showDatePicker ? (
+              <Modal
+                visible={showDatePicker}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowDatePicker(false)}
+              >
+                <View style={styles.datePickerOverlay}>
+                  <View
+                    style={[
+                      styles.datePickerCard,
+                      {
+                        width: isSmallMobile
+                          ? width - 28
+                          : isMobile
+                          ? width - 36
+                          : isTablet
+                          ? Math.min(width - 52, 560)
+                          : 560,
+                        paddingHorizontal: isSmallMobile ? 16 : 20,
+                      },
+                    ]}
+                  >
+                    <View style={styles.datePickerHeader}>
+                      <View style={styles.datePickerHeaderIcon}>
+                        <Ionicons
+                          name="calendar-outline"
+                          size={20}
+                          color={COLORS.violet600}
+                        />
+                      </View>
+
+                      <View style={styles.datePickerHeaderText}>
+                        <Text style={styles.datePickerTitle}>
+                          Select appointment date
+                        </Text>
+                        <Text style={styles.datePickerSubtitle}>
+                          Choose today or any upcoming available date.
+                        </Text>
+                      </View>
+
+                      <Pressable
+                        onPress={() => setShowDatePicker(false)}
+                        hitSlop={8}
+                        style={styles.datePickerClose}
+                      >
+                        <Ionicons
+                          name="close"
+                          size={19}
+                          color={COLORS.slate600}
+                        />
+                      </Pressable>
+                    </View>
+
+                    <View style={styles.nativePickerSurface}>
+                      <DateTimePicker
+                        value={
+                          selectedDate
+                            ? new Date(`${selectedDate}T00:00:00`)
+                            : new Date()
+                        }
+                        mode="date"
+                        minimumDate={new Date(`${minDate}T00:00:00`)}
+                        display={
+                          Platform.OS === "android"
+                            ? "calendar"
+                            : "inline"
+                        }
+                        onChange={(event, pickedDate) => {
+                          if (Platform.OS === "android") {
+                            setShowDatePicker(false);
+                          }
+
+                          if (event?.type === "dismissed" || !pickedDate) {
+                            return;
+                          }
+
+                          const year = pickedDate.getFullYear();
+                          const month = String(
+                            pickedDate.getMonth() + 1
+                          ).padStart(2, "0");
+                          const day = String(
+                            pickedDate.getDate()
+                          ).padStart(2, "0");
+
+                          setSelectedDate(`${year}-${month}-${day}`);
+
+                          if (Platform.OS === "ios") {
+                            // Keep the iOS picker open until Done is pressed.
+                          }
+                        }}
+                        style={styles.nativeDatePicker}
+                      />
+                    </View>
+
+                    {Platform.OS === "ios" ? (
+                      <Pressable
+                        onPress={() => setShowDatePicker(false)}
+                        style={({ pressed }) => [
+                          styles.datePickerDoneButton,
+                          pressed && styles.pressedButton,
+                        ]}
+                      >
+                        <Text style={styles.datePickerDoneText}>
+                          Done
+                        </Text>
+                      </Pressable>
+                    ) : null}
+                  </View>
+                </View>
+              </Modal>
+            ) : null}
 
             {/* SELECTED DATE */}
 
@@ -883,9 +1034,9 @@ const CustomerStaffDateSlots = () => {
                   </Text>
 
                   <Text
-                    style={
-                      styles.selectedDateText
-                    }
+                    numberOfLines={2}
+                    ellipsizeMode="tail"
+                    style={styles.selectedDateText}
                   >
                     {formatDate(selectedDate)}
                   </Text>
@@ -899,7 +1050,7 @@ const CustomerStaffDateSlots = () => {
           ================================================= */}
 
           {selectedDate ? (
-            <View style={styles.sectionCard}>
+            <View style={[styles.sectionCard, { padding: isSmallMobile ? 15 : isMobile ? 17 : isTablet ? 20 : 22 }]}>
               <LinearGradient
                 colors={[
                   COLORS.fuchsia500,
@@ -1188,9 +1339,7 @@ const CustomerStaffDateSlots = () => {
                     style={[
                       styles.slotsGrid,
                       {
-                        gap: isSmallMobile
-                          ? 9
-                          : 11,
+                        gap: slotGap,
                       },
                     ]}
                   >
@@ -1213,15 +1362,7 @@ const CustomerStaffDateSlots = () => {
                             slot={slot}
                             label={slotLabel}
                             selected={selected}
-                            width={
-                              slotColumns === 2
-                                ? "48%"
-                                : slotColumns === 4
-                                ? "23.7%"
-                                : slotColumns === 5
-                                ? "19%"
-                                : "15.6%"
-                            }
+                            width={slotButtonWidth}
                             onPress={() =>
                               setSelectedSlot(
                                 slot
@@ -1825,6 +1966,11 @@ const styles = StyleSheet.create({
     gap: 13,
   },
 
+  headerContentMobile: {
+    width: "100%",
+    flex: 0,
+  },
+
   backButton: {
     width: 46,
     height: 46,
@@ -1941,7 +2087,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     minWidth: 0,
     flexShrink: 1,
-    gap: 8,
+    gap: 6,
   },
 
   progressStepCompact: {
@@ -1949,9 +2095,9 @@ const styles = StyleSheet.create({
   },
 
   progressCircle: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
@@ -1986,10 +2132,10 @@ const styles = StyleSheet.create({
   },
 
   progressLabel: {
-    maxWidth: 90,
+    maxWidth: 72,
     flexShrink: 1,
-    fontSize: 11,
-    lineHeight: 15,
+    fontSize: 10,
+    lineHeight: 14,
     fontWeight: "800",
     color: COLORS.slate400,
   },
@@ -2005,8 +2151,8 @@ const styles = StyleSheet.create({
   progressLine: {
     flex: 1,
     height: 1,
-    minWidth: 5,
-    marginHorizontal: 6,
+    minWidth: 3,
+    marginHorizontal: 4,
     backgroundColor: COLORS.slate200,
   },
 
@@ -2075,14 +2221,14 @@ const styles = StyleSheet.create({
     minWidth: 0,
     flexDirection: "row",
     alignItems: "flex-start",
-    padding: 18,
-    gap: 13,
+    padding: 16,
+    gap: 11,
   },
 
   infoIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 17,
+    width: 48,
+    height: 48,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
@@ -2181,8 +2327,8 @@ const styles = StyleSheet.create({
     width: "100%",
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 13,
-    marginBottom: 22,
+    gap: 11,
+    marginBottom: 18,
   },
 
   sectionIcon: {
@@ -2256,12 +2402,17 @@ const styles = StyleSheet.create({
 
   nativeDatePlaceholder: {
     flex: 1,
-    justifyContent: "center",
+    minWidth: 0,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingLeft: 48,
-    paddingRight: 14,
+    paddingRight: 12,
   },
 
   nativeDateText: {
+    flex: 1,
+    minWidth: 0,
     fontSize: 14,
     lineHeight: 20,
     fontWeight: "700",
@@ -2270,6 +2421,127 @@ const styles = StyleSheet.create({
 
   nativeDatePlaceholderText: {
     color: COLORS.slate400,
+  },
+
+  dateChevron: {
+    marginLeft: 8,
+    flexShrink: 0,
+  },
+
+  /* =======================================================
+     NATIVE DATE PICKER MODAL
+  ======================================================= */
+
+  datePickerOverlay: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 14,
+    backgroundColor: "rgba(15,23,42,0.48)",
+  },
+
+  datePickerCard: {
+    overflow: "hidden",
+    borderRadius: 28,
+    paddingTop: 18,
+    paddingBottom: 18,
+    backgroundColor: COLORS.white,
+    borderWidth: 1,
+    borderColor: COLORS.slate200,
+    shadowColor: COLORS.slate950,
+    shadowOffset: {
+      width: 0,
+      height: 18,
+    },
+    shadowOpacity: 0.18,
+    shadowRadius: 35,
+    elevation: 12,
+  },
+
+  datePickerHeader: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 12,
+  },
+
+  datePickerHeaderIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+    backgroundColor: COLORS.violet50,
+    borderWidth: 1,
+    borderColor: COLORS.violet100,
+  },
+
+  datePickerHeaderText: {
+    flex: 1,
+    minWidth: 0,
+  },
+
+  datePickerTitle: {
+    flexShrink: 1,
+    fontSize: 15,
+    lineHeight: 20,
+    fontWeight: "900",
+    color: COLORS.slate950,
+  },
+
+  datePickerSubtitle: {
+    marginTop: 2,
+    flexShrink: 1,
+    fontSize: 10,
+    lineHeight: 15,
+    fontWeight: "600",
+    color: COLORS.slate500,
+  },
+
+  datePickerClose: {
+    width: 34,
+    height: 34,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+    backgroundColor: COLORS.slate50,
+    borderWidth: 1,
+    borderColor: COLORS.slate200,
+  },
+
+  nativePickerSurface: {
+    width: "100%",
+    minHeight: 250,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 20,
+    overflow: "hidden",
+    backgroundColor: COLORS.slate50,
+    borderWidth: 1,
+    borderColor: COLORS.slate100,
+  },
+
+  nativeDatePicker: {
+    alignSelf: "center",
+  },
+
+  datePickerDoneButton: {
+    width: "100%",
+    minHeight: 48,
+    marginTop: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 15,
+    backgroundColor: COLORS.violet600,
+  },
+
+  datePickerDoneText: {
+    fontSize: 13,
+    fontWeight: "900",
+    color: COLORS.white,
   },
 
   selectedDateCard: {
@@ -2310,6 +2582,7 @@ const styles = StyleSheet.create({
   selectedDateText: {
     marginTop: 2,
     flexShrink: 1,
+    width: "100%",
     fontSize: 13,
     lineHeight: 19,
     fontWeight: "900",
@@ -2863,7 +3136,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
-    gap: 12,
+    gap: 8,
   },
 
   bookingInfo: {
@@ -2979,7 +3252,7 @@ const styles = StyleSheet.create({
     width: "100%",
     backgroundColor: COLORS.white,
     borderTopWidth: 1,
-    borderTopColor: COLORS.border,
+    borderTopColor: COLORS.slate200,
   },
 });
 

@@ -49,9 +49,7 @@ import {
 } from "../../../../services/adminSalonService";
 
 const API_URL =
-  process.env.EXPO_PUBLIC_API_URL ||
-  "http://localhost:1812";
-
+  process.env.EXPO_PUBLIC_API_URL
 const API_ORIGIN = API_URL.replace(/\/api\/?$/, "");
 
 const DAYS = [

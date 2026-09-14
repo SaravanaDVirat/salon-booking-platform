@@ -669,6 +669,10 @@ const CustomerAppointmentConfirm = () => {
               <View
                 style={[
                   styles.card,
+                  !isSmallMobile &&
+                    !isTablet &&
+                    !isDesktop &&
+                    styles.cardMobile,
                   isSmallMobile &&
                     styles.cardSmall,
                 ]}
@@ -719,7 +723,6 @@ const CustomerAppointmentConfirm = () => {
                         isSmallMobile &&
                           styles.salonNameSmall,
                       ]}
-                      numberOfLines={2}
                     >
                       {salon?.name ||
                         "Salon"}
@@ -732,7 +735,6 @@ const CustomerAppointmentConfirm = () => {
                           isSmallMobile &&
                             styles.salonCitySmall,
                         ]}
-                        numberOfLines={2}
                       >
                         {salon.city}
                       </Text>
@@ -774,6 +776,10 @@ const CustomerAppointmentConfirm = () => {
               <View
                 style={[
                   styles.card,
+                  !isSmallMobile &&
+                    !isTablet &&
+                    !isDesktop &&
+                    styles.cardMobile,
                   isSmallMobile &&
                     styles.cardSmall,
                 ]}
@@ -783,7 +789,13 @@ const CustomerAppointmentConfirm = () => {
                 />
 
                 <View
-                  style={styles.sectionHeader}
+                  style={[
+                    styles.sectionHeader,
+                    !isSmallMobile &&
+                      !isTablet &&
+                      !isDesktop &&
+                      styles.sectionHeaderMobile,
+                  ]}
                 >
                   <View
                     style={
@@ -842,6 +854,12 @@ const CustomerAppointmentConfirm = () => {
                   <View
                     style={[
                       styles.detailCard,
+                      !isSmallMobile &&
+                        !isTablet &&
+                        !isDesktop &&
+                        styles.detailCardMobile,
+                      (isTablet || isDesktop) &&
+                        styles.detailCardWide,
                       isSmallMobile &&
                         styles.detailCardSmall,
                     ]}
@@ -884,10 +902,13 @@ const CustomerAppointmentConfirm = () => {
                       <Text
                         style={[
                           styles.detailValue,
+                          !isSmallMobile &&
+                            !isTablet &&
+                            !isDesktop &&
+                            styles.detailValueMobile,
                           isSmallMobile &&
                             styles.detailValueSmall,
                         ]}
-                        numberOfLines={3}
                       >
                         {service?.name ||
                           "Selected Service"}
@@ -900,6 +921,12 @@ const CustomerAppointmentConfirm = () => {
                   <View
                     style={[
                       styles.detailCard,
+                      !isSmallMobile &&
+                        !isTablet &&
+                        !isDesktop &&
+                        styles.detailCardMobile,
+                      (isTablet || isDesktop) &&
+                        styles.detailCardWide,
                       isSmallMobile &&
                         styles.detailCardSmall,
                     ]}
@@ -942,10 +969,13 @@ const CustomerAppointmentConfirm = () => {
                       <Text
                         style={[
                           styles.detailValue,
+                          !isSmallMobile &&
+                            !isTablet &&
+                            !isDesktop &&
+                            styles.detailValueMobile,
                           isSmallMobile &&
                             styles.detailValueSmall,
                         ]}
-                        numberOfLines={3}
                       >
                         {staff?.name ||
                           "Selected Stylist"}
@@ -958,6 +988,12 @@ const CustomerAppointmentConfirm = () => {
                   <View
                     style={[
                       styles.detailCard,
+                      !isSmallMobile &&
+                        !isTablet &&
+                        !isDesktop &&
+                        styles.detailCardMobile,
+                      (isTablet || isDesktop) &&
+                        styles.detailCardWide,
                       isSmallMobile &&
                         styles.detailCardSmall,
                     ]}
@@ -1000,10 +1036,13 @@ const CustomerAppointmentConfirm = () => {
                       <Text
                         style={[
                           styles.detailValue,
+                          !isSmallMobile &&
+                            !isTablet &&
+                            !isDesktop &&
+                            styles.detailValueMobile,
                           isSmallMobile &&
                             styles.detailValueSmall,
                         ]}
-                        numberOfLines={3}
                       >
                         {formatDate(date)}
                       </Text>
@@ -1015,6 +1054,12 @@ const CustomerAppointmentConfirm = () => {
                   <View
                     style={[
                       styles.detailCard,
+                      !isSmallMobile &&
+                        !isTablet &&
+                        !isDesktop &&
+                        styles.detailCardMobile,
+                      (isTablet || isDesktop) &&
+                        styles.detailCardWide,
                       isSmallMobile &&
                         styles.detailCardSmall,
                     ]}
@@ -1057,10 +1102,13 @@ const CustomerAppointmentConfirm = () => {
                       <Text
                         style={[
                           styles.detailValue,
+                          !isSmallMobile &&
+                            !isTablet &&
+                            !isDesktop &&
+                            styles.detailValueMobile,
                           isSmallMobile &&
                             styles.detailValueSmall,
                         ]}
-                        numberOfLines={2}
                       >
                         {startTime}
                         {endTime
@@ -1077,6 +1125,10 @@ const CustomerAppointmentConfirm = () => {
               <View
                 style={[
                   styles.card,
+                  !isSmallMobile &&
+                    !isTablet &&
+                    !isDesktop &&
+                    styles.cardMobile,
                   isSmallMobile &&
                     styles.cardSmall,
                 ]}
@@ -1258,7 +1310,6 @@ const CustomerAppointmentConfirm = () => {
                           isSmallMobile &&
                             styles.summaryServiceNameSmall,
                         ]}
-                        numberOfLines={3}
                       >
                         {service?.name ||
                           "Selected Service"}
@@ -1521,7 +1572,6 @@ const CustomerAppointmentConfirm = () => {
                             isSmallMobile &&
                               styles.quickValueSmall,
                           ]}
-                          numberOfLines={2}
                         >
                           {staff?.name ||
                             "Selected Stylist"}
@@ -1944,6 +1994,11 @@ const styles = StyleSheet.create({
     borderRadius: 22,
   },
 
+  cardMobile: {
+    padding: 18,
+    borderRadius: 24,
+  },
+
   cardTopLine: {
     position: "absolute",
     top: 0,
@@ -2091,6 +2146,12 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
 
+  sectionHeaderMobile: {
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 17,
+  },
+
   sectionHeaderText: {
     flex: 1,
     minWidth: 0,
@@ -2184,6 +2245,15 @@ const styles = StyleSheet.create({
     borderRadius: 15,
   },
 
+  detailCardMobile: {
+    width: "100%",
+    minHeight: 84,
+  },
+
+  detailCardWide: {
+    width: "48%",
+  },
+
   detailIcon: {
     width: 40,
     height: 40,
@@ -2234,6 +2304,12 @@ const styles = StyleSheet.create({
     lineHeight: 15,
   },
 
+  detailValueMobile: {
+    fontSize: 13,
+    lineHeight: 19,
+    flexShrink: 1,
+  },
+
   /* =========================================================
      NOTES
   ========================================================= */
@@ -2244,6 +2320,11 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
     justifyContent: "space-between",
     gap: 10,
+  },
+
+  notesHeaderMobile: {
+    alignItems: "center",
+    gap: 8,
   },
 
   notesHeaderText: {

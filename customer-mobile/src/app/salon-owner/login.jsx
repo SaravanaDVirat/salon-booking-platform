@@ -609,8 +609,9 @@ const SalonOwnerLogin = () => {
               autoCapitalize
             }
             autoComplete={
-              autoComplete
+              Platform.OS === "android" ? "off" : autoComplete
             }
+            importantForAutofill="no"
             autoCorrect={false}
             spellCheck={false}
             onFocus={() =>
@@ -1137,7 +1138,7 @@ const SalonOwnerLogin = () => {
             false
           }
           keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="on-drag"
+          keyboardDismissMode="none"
           bounces={false}
         >
           <View
